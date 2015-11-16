@@ -3,6 +3,10 @@
     <title>Gender Inequality Index - Information Visualization</title>
     <link rel="stylesheet" href="main.css">   
     <script src="d3.min.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="query-ui.css">
+    <script src="jquery-2.1.4.js"></script>
+    <script src="jquery-ui.js"></script>
+    <script src="autocomplete.js"></script>
   </head>
 
   <body>
@@ -21,6 +25,10 @@
       <li data-id="labour_diff">Difference Female-Male Labour Rate</li>
       <li data-id="human-development">Human Development</li>
     </ul>
+    <div class="ui-widget">
+      <label for="tags">Select country: </label>
+      <input id="tags">
+    </div>
     <script src="main.js"></script>   
   </body>
 
