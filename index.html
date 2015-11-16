@@ -1,12 +1,11 @@
 <html>
   <head>
     <title>Gender Inequality Index - Information Visualization</title>
-    <link rel="stylesheet" href="main.css">   
     <script src="d3.min.js" charset="utf-8"></script>
-    <link rel="stylesheet" href="query-ui.css">
     <script src="jquery-2.1.4.js"></script>
     <script src="jquery-ui.js"></script>
-    <script src="autocomplete.js"></script>
+    <script src="attrSelector.js"></script>
+    <link rel="stylesheet" href="main.css">
   </head>
 
   <body>
@@ -25,7 +24,26 @@
       <li data-id="labour_diff">Difference Female-Male Labour Rate</li>
       <li data-id="human-development">Human Development</li>
     </ul>
-    <select name="ddl">
+
+
+    <table id="table">
+        <tr><td>Gender Inequality Rank</td></tr>
+        <tr><td>Gender Inequality Value</td></tr>
+        <tr><td>Adolescent Birth Rate</td></tr>
+        <tr><td>Share of seats in parliament</td></tr>
+        <tr><td>Education female</td></tr>
+        <tr><td>Education male</td></tr>
+        <tr><td>Labour force male</td></tr>
+        <tr><td>Labour force female</td></tr>
+        <tr><td>Diff labour</td></tr>
+        <tr><td>Diff education</td></tr>
+        <tr><td>Human development</td></tr>
+        <tr><td>Maternal Mortality</td></tr>
+    </table>
+    <input type="button" id="tst" value="OK" onclick="fnselect()" />
+
+
+    <select name="country">
     <option value="Afghanistan">Afghanistan</option>
     <option value="Albania">Albania</option>
     <option value="Algeria">Algeria</option>
