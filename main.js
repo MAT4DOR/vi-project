@@ -29,6 +29,49 @@ function initializeVisualizations() {
     // TODO: create svgs and put them on screen
 }
 
+function changeVisualizations() {
+    var value = $('.selected').attr("data-id");
+    if(value == "labour_diff"){
+        sideWaysDivergentBar();
+    }
+}
+
+function sideWaysDivergentBar() {
+    var w = 800;
+    var h = 5000;
+    var svg = d3.select("#charts");
+    svg = svg.append("svg")
+            .attr("width",w)
+            .attr("height",h); 
+
+    var comparingFunction = function compareNumbers(a, b) {
+        return parseInt(b.labour_diff) - parseInt(a.labour_diff);
+        };     
+
+    var orderedDataset = full_dataset;
+    orderedDataset = orderedDataset.sort(comparingFunction);
+
+
+    svg.selectAll("rect")
+        .data(orderedDataset)
+        .enter().append("rect")
+        .attr("width",function(d) {
+                    return Math.abs(parseInt(d.labour_diff));
+            })
+        .attr("height",20)
+        .attr("fill","purple")
+        .attr("x",function(d) {
+            return Math.sign(parseInt(d.labour_diff))==1 ? w/2 : w/2+parseInt(d.labour_diff);
+            })
+        .attr("y",function(d, i) {
+            return i*21;
+            })
+        .attr("fill",function(d, i) {
+            return i==0 ? "green" : i==orderedDataset.length-1 ? "red" : "blue"
+            });
+
+}
+
 function initialize() {
     initializeInterface();
     initializeVisualizations();
@@ -38,7 +81,7 @@ $('#attribute-selection-one li').click(function() {
     var self = $(this);
     self.parent().children('.selected').removeClass('selected');
     self.addClass('selected');
-
+    changeVisualizations();
 });
 
 $('#tst').click(function(){
