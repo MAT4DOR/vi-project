@@ -26,11 +26,12 @@ function initializeInterface() {
 }
 
 function initializeVisualizations() {
-    // TODO: create svgs and put them on screen
+
 }
 
 function changeVisualizations() {
     var value = $('.selected').attr("data-id");
+    task1();
     if(value == "labour_diff"){
         sideWaysDivergentBar();
     }
@@ -72,6 +73,42 @@ function sideWaysDivergentBar() {
 
 }
 
+function task1() {
+    var w = 800;
+    var h = 400;
+    var svg = d3.select("#task1");
+
+    var country1 = getSelectedText("country-selection-one");
+    var country2 = getSelectedText("country-selection-two");
+    var data1;
+    var data2;
+    var selectedAttr = $('.selected').attr("data-id");
+    for(var i = 0; i < full_dataset.length; ++i) {
+        if(full_dataset[i].country == country1){
+            data1 = full_dataset[i][selectedAttr];
+        }
+        if(full_dataset[i].country == country2){
+            data2 = full_dataset[i][selectedAttr];
+        }
+    }
+
+    svg = svg.append("svg");
+    svg = svg.attr("width",w);
+    svg = svg.attr("height",h);
+    svg.append("rect")
+        .attr("width",80)
+        .attr("height", parseFloat(data1))
+        .attr("fill","purple")
+        .attr("y",h-parseFloat(data1))
+        .attr("x",0);
+    svg.append("rect")
+        .attr("width",80)
+        .attr("height", parseFloat(data2))
+        .attr("fill","green")
+        .attr("y",h-parseFloat(data2))
+        .attr("x",100);
+}
+
 function initialize() {
     initializeInterface();
     initializeVisualizations();
@@ -89,3 +126,12 @@ $('#tst').click(function(){
     value = value || 'No row Selected';
     alert(value);
 });
+
+function getSelectedText(elementId) {
+    var elt = document.getElementById(elementId);
+
+    if (elt.selectedIndex == -1)
+        return null;
+
+    return elt.options[elt.selectedIndex].text;
+}
