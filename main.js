@@ -28,8 +28,9 @@ function initializeData() {
         var max = attributes[attrIndex].max;
         if (max == -1) {
             for (var i = 0; i < full_dataset.length; ++i) {
-                if (Math.abs(full_dataset[i][attr]) > max)
-                    max = Math.abs(full_dataset[i][attr]);
+                var v = parseFloat(full_dataset[i][attr].replace(/,/g, '.'));
+                if (Math.abs(v) > max)
+                    max = Math.abs(v);
             }
         }
         attributes[attrIndex].max = max;
@@ -48,7 +49,7 @@ function initializeInterface() {
 
     var countrySelection = $('#country-selection');
     for (var n = 0; n < countryColors.length; ++n) {
-        countrySelection.append('<select id="country-selection-' + n + '" name="country"></select>');
+        countrySelection.append('<select id="country-selection-' + n + '" name="country"></select> ');
     }
 
     for (var n = 0; n < countryColors.length; ++n) {
@@ -71,23 +72,22 @@ function initializeVisualizations() {
 
 function initTask2() {
     var options = {
-        width: 1000,
+        width: 800,
         height: 400,
         padding: 60,
-        paddingLeft: 50,
-        distanceBetween: 100,
+        paddingH: 40
     }
     var svg = d3.select('#task2').append('svg');
     svg.attr('width', options.width).attr('height', options.height);
 
     var enterSelection = svg.selectAll('circle').data(full_dataset).enter();
 
-    var scaleX = d3.scale.ordinal().rangeRoundBands([0, options.width]);
+    var scaleX = d3.scale.ordinal().rangeRoundBands([options.paddingH, options.width - options.paddingH]);
     scaleX.domain(attributes.map(function(d) { return d.shortname; }));
     var xAxis = d3.svg.axis().scale(scaleX).orient('bottom');
     svg.append('g')
         .attr('class', 'axis task2')
-        .attr('transform', 'translate(0,' + (options.height-options.padding+10) + ')')
+        .attr('transform', 'translate(-' + scaleX.rangeBand()/2 + ',' + (options.height-options.padding+10) + ')')
         .call(xAxis)
         .selectAll('.tick text')
         .call(wrap, scaleX.rangeBand());
@@ -100,7 +100,7 @@ function initTask2() {
         scaleY[attr] = d3.scale.linear().domain([max, min]).range([options.padding,options.height-options.padding]);
 
         var axisGroup = svg.append('g').attr('class', 'axis-' + attr);
-        var x0 = options.distanceBetween * attrIndex + options.paddingLeft;
+        var x0 = scaleX(attributes[attrIndex].shortname);
         var yAxis = d3.svg.axis().scale(scaleY[attr]).orient("left").ticks(0, "f").tickValues([min, max]);
         axisGroup.append("g")
             .attr('transform','translate(' + (x0-8-0.5) + ', -0.5)')
@@ -110,7 +110,7 @@ function initTask2() {
         enterSelection.append('circle').attr('class', 'to-remove').filter(function (d) { return d[attr] != -1; })
             .attr('fill', '#555')
             .attr('r', 5)
-            .attr('cx', options.distanceBetween * attrIndex + options.paddingLeft)
+            .attr('cx', x0)
             .attr('cy', function(d, i) { return scaleY[attr](parseFloat(d[attr].replace(/,/g, '.'))); })
             .attr('attr', attr)
             .attr('country', function(d, i) { return i; })
@@ -124,15 +124,15 @@ function initTask2() {
         var group = svg.append('g').attr('class', 'selector-' + countrySelectorNumber);
         for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
             var attr = attributes[attrIndex].col;
+            var x0 = scaleX(attributes[attrIndex].shortname);
             group.append('circle')
                 .attr('fill', countryColors[countrySelectorNumber])
                 .attr('r', 5)
-                .attr('cx', options.distanceBetween * attrIndex + options.paddingLeft)
+                .attr('cx', x0)
                 .attr('cy', -10000)
                 .attr('opacity', 0.6)
                 .attr('attr', attr);
 
-            var x0 = options.distanceBetween * attrIndex + options.paddingLeft;
             group.append('line')
                 .attr('x1', x0 - 2).attr('x2', x0 - 8)
                 .attr('y1', -10000).attr('y2', -10000)
