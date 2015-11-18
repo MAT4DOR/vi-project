@@ -9,6 +9,12 @@
 
   <body>
     <h1>Gender Inequality Index - Information Visualization</h1>
+
+    <div id="country-selection">
+      <select id="country-selection-one" name="country"></select>
+      <select id="country-selection-two" name="country"></select>
+    </div>
+
     <ul id="attribute-selection-one">
       <li data-id="gii_value">Gender Inequality Index Value</li>
       <li data-id="gii_rank">Gender Inequality Index Rank</li>
@@ -24,14 +30,12 @@
       <li data-id="human-development">Human Development</li>
     </ul>
 
-    <input type="button" id="tst" value="OK" />
+    <div id="charts">
+      <div id="task2"></div>
+      <div id="task1"></div>
+      <div id="task4"></div>
+    </div>
 
-    <select id="country-selection-one" name="country"></select>
-    <select id="country-selection-two" name="country"></select>
-
-    <div id="charts"></div>
-
-    <div id="task1"></div>
 
     <script src="main.js"></script>   
   </body>

@@ -16,7 +16,15 @@ li {
     cursor: pointer;
 }
 
-.selected {
-    background-color: brown;
+#attribute-selection-one li.selected {
+    background-color: #44f;
     color: #FFF;
+}
+
+#country-selection {
+    text-align: center;
+}
+
+#attribute-selection-one, #charts {
+    display: inline-block;
 }
