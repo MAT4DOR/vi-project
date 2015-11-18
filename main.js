@@ -22,6 +22,8 @@ dsv('gender_inequality.csv', function (data) {
     initialize();
 });
 
+var task1Initialized = false;
+
 function initializeData() {
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
         var attr = attributes[attrIndex].col;
@@ -181,6 +183,7 @@ function updateTask2(countrySelectorNumber, selectedCountry) {
 
 function changeSelectedCountry(countrySelectorNumber, selectedCountry) {
     updateTask2(countrySelectorNumber, selectedCountry);
+    updateTask1();
 }
 
 // from: http://bl.ocks.org/mbostock/7555321
@@ -210,7 +213,11 @@ function wrap(text, width) {
 
 function changeVisualizations() {
     var value = $('.selected').attr("data-id");
-    task1();
+    if(!task1Initialized){
+        initTask1();
+        task1Initialized = true;
+    }
+    else updateTask1();
     if(value == "labour_diff"){
         sideWaysDivergentBar();
     }
@@ -252,10 +259,101 @@ function sideWaysDivergentBar() {
 
 }
 
-function task1() {
-    var w = 800;
-    var h = 400;
-    var svg = d3.select("#task1");
+function initTask1(){
+    var margin = {top: 20, right: 20, bottom: 30, left: 200},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+    var x = d3.scale.ordinal()
+        .rangeRoundBands([0, width], .1);
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom");
+
+    var svg = d3.select("#task1").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    visualizations.task1 = {svg: svg};
+    var country1 = getSelectedText("country-selection-0");
+    var country2 = getSelectedText("country-selection-1");
+    var data1;
+    var data2;
+    var selectedAttr = $('.selected').attr("data-id");
+    for(var i = 0; i < full_dataset.length; ++i) {
+        if(full_dataset[i].country == country1){
+            data1 = full_dataset[i][selectedAttr];
+        }
+        if(full_dataset[i].country == country2){
+            data2 = full_dataset[i][selectedAttr];
+        }
+    }
+     
+      svg.append("g")
+          .append("text")
+            .attr("id", "country1NameText")
+            .attr("y", height + 20)
+            .attr("x", -100)
+            .text(country1);
+    svg.append("g")
+      .append("text")
+        .attr("id", "country2NameText")
+        .attr("y", height + 20)
+        .attr("x", 100)
+        .text(country2);
+
+    svg.append("rect")
+      .attr("class", "bar")
+      .attr("id", "barCountry1")
+      .attr("x", 0)
+      .attr("width", 30)
+      .attr("y",height-parseFloat(data1))
+      .attr("height", parseFloat(data1))
+      .attr("fill","#FF5500")
+      .append("title")
+        .text(data1);
+    svg.append("rect")
+      .attr("class", "bar")
+      .attr("id", "barCountry2")
+      .attr("x", 40)
+      .attr("width", 30)
+      .attr("y",height-parseFloat(data2))
+      .attr("height", parseFloat(data2))
+      .attr("fill","#00FF55");
+    svg.append("text")
+        .attr("id","task1label1")
+        .attr("x", 0)
+        .attr("y", height - parseFloat(data1) - 10)
+        .text(data1);
+    svg.append("text")
+        .attr("id","task1label2")
+        .attr("x", 40)
+        .attr("y", height - parseFloat(data2) - 10)
+        .text(data2);
+}
+
+function updateTask1() {
+    var svg = visualizations.task1.svg;
+
+    var margin = {top: 20, right: 20, bottom: 30, left: 200},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+    var x = d3.scale.ordinal()
+        .rangeRoundBands([0, width], .1);
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom");
 
     var country1 = getSelectedText("country-selection-0");
     var country2 = getSelectedText("country-selection-1");
@@ -271,21 +369,20 @@ function task1() {
         }
     }
 
-    svg = svg.append("svg");
-    svg = svg.attr("width",w);
-    svg = svg.attr("height",h);
-    svg.append("rect")
-        .attr("width",80)
-        .attr("height", parseFloat(data1))
-        .attr("fill","purple")
-        .attr("y",h-parseFloat(data1))
-        .attr("x",0);
-    svg.append("rect")
-        .attr("width",80)
-        .attr("height", parseFloat(data2))
-        .attr("fill","green")
-        .attr("y",h-parseFloat(data2))
-        .attr("x",100);
+    svg.select("#country1NameText").text(country1);
+    svg.select("#country2NameText").text(country2);
+    var bar1 = svg.select("#barCountry1");
+    var bar2 = svg.select("#barCountry2");
+    bar2.attr("y",height-parseFloat(data2))
+      .attr("height", parseFloat(data2));
+    bar1.attr("y",height-parseFloat(data1))
+      .attr("height", parseFloat(data1));
+    var label1 = svg.select("#task1label1");
+    var label2 = svg.select("#task1label2");
+    label1.attr("y", height - parseFloat(data1) - 10)
+        .text(data1);
+    label2.attr("y", height - parseFloat(data2) - 10)
+        .text(data2);
 }
 
 function initialize() {
