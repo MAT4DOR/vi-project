@@ -28,3 +28,18 @@ li {
 #attribute-selection-one, #charts {
     display: inline-block;
 }
+
+.axis path, .axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text, .axistext {
+     font-family: calibri, sans serif;
+     font-size: 10pt;
+ }
+
+.axis.task2 .domain { /* , .axis.task2 .tick line */
+    display: none;
+}
