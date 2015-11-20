@@ -1,6 +1,6 @@
 h1 { 
     font-size: 18pt;
-    font-family: calibri, arial, sans serif;
+    font-family: calibri, arial, sans-serif;
     text-align: center;
 }
 
@@ -41,7 +41,7 @@ h1 {
 }
 
 .axis text, .axistext {
-     font-family: calibri, sans serif;
+     font-family: calibri, sans-serif;
      font-size: 8pt;
  }
 

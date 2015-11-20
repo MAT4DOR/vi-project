@@ -104,6 +104,7 @@ function initTask2() {
 
         var axisGroup = svg.append('g').attr('class', 'axis-' + attr);
         var x0 = scaleX(attributes[attrIndex].shortname);
+        
         var yAxis = d3.svg.axis().scale(scaleY[attr]).orient("left").ticks(0, "f").tickValues(attr.endsWith('_diff') ? [min, 0, max] : [min, max]);
         axisGroup.append("g")
             .attr('transform','translate(' + (x0-8-0.5) + ', -0.5)')
@@ -137,12 +138,12 @@ function initTask2() {
                 .attr('attr', attr);
 
             group.append('line')
-                .attr('x1', x0 - 2).attr('x2', x0 - 8)
+                .attr('x1', x0 + (countrySelectorNumber % 2 == 0 ? -2 : 2)).attr('x2', x0 + (countrySelectorNumber % 2 == 0 ? -8 : 8))
                 .attr('y1', -10000).attr('y2', -10000)
                 .attr('stroke-width', 1).attr('stroke', 'black').attr('attr', attr);
-            group.append('text').attr('x', x0 - 10 - 0.5).attr('y', -10000)
+            group.append('text').attr('x', x0 + (countrySelectorNumber % 2 == 0 ? -10 : 10) - 0.5).attr('y', -10000)
                 .attr('class', 'axistext').attr('dy', '.32em')
-                .attr('fill', 'black').attr('text-anchor', 'end').text('').attr('attr', attr);
+                .attr('fill', 'black').attr('text-anchor', countrySelectorNumber % 2 == 0 ? 'end' : 'start').text('').attr('attr', attr);
         }
         updateTask2(countrySelectorNumber, $('#country-selection-' + countrySelectorNumber + ' option:selected').attr('value'))
     }
