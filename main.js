@@ -23,6 +23,7 @@ dsv('gender_inequality.csv', function (data) {
 });
 
 var task1Initialized = false;
+var task4Initialized = false;
 
 function initializeData() {
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
@@ -186,6 +187,26 @@ function changeSelectedCountry(countrySelectorNumber, selectedCountry) {
     updateTask1();
 }
 
+function changeVisualizations() {
+    var value = $('.selected').attr("data-id");
+    if(!task1Initialized){
+        initTask1();
+        task1Initialized = true;
+    }
+    else updateTask1();
+    if(value == "labour_diff" || value == "edu_diff"){
+    	if(!task4Initialized){
+    		initHorizontalDivergentBar();
+        	task4Initialized = true;
+        }else
+        	updateHorizontalDivergentBar();
+    }
+    else{
+    	hideHorizontalDivergentBar();
+    	//hide vis
+    }
+}
+
 // from: http://bl.ocks.org/mbostock/7555321
 function wrap(text, width) {
     text.each(function() {
@@ -211,52 +232,177 @@ function wrap(text, width) {
     });
 }
 
-function changeVisualizations() {
-    var value = $('.selected').attr("data-id");
-    if(!task1Initialized){
-        initTask1();
-        task1Initialized = true;
-    }
-    else updateTask1();
-    if(value == "labour_diff"){
-        sideWaysDivergentBar();
-    }
-}
+function initHorizontalDivergentBar() {
+	var margin = {top: 20, right: 20, bottom: 30, left: 200};
+    var w = 960 - margin.left - margin.right;
+    var h = 500 - margin.top - margin.bottom;
 
-function sideWaysDivergentBar() {
-    var w = 800;
-    var h = 5000;
+	var selectedAttr = $('.selected').attr("data-id");
+
     var svg = d3.select("#task4");
     svg = svg.append("svg")
             .attr("width",w)
             .attr("height",h);
 
+    visualizations.task4 = {svg: svg};
+
     var comparingFunction = function compareNumbers(a, b) {
-        return parseInt(b.labour_diff) - parseInt(a.labour_diff);
+        return parseInt(b[selectedAttr]) - parseInt(a[selectedAttr]);
         };
 
     var orderedDataset = full_dataset;
     orderedDataset = orderedDataset.sort(comparingFunction);
 
+//este shortenedDataset pode ser calculado no inicio para ambos os casos (edu e labour diff) e dps reutilziava esses
+    var shortenedDataset = [];
+    shortenedDataset[0] = orderedDataset[0];
+    shortenedDataset[1] = orderedDataset[1];
+    shortenedDataset[2] = orderedDataset[2];
+    shortenedDataset[3] = orderedDataset[orderedDataset.length-3];
+    shortenedDataset[4] = orderedDataset[orderedDataset.length-2];
+    shortenedDataset[5] = orderedDataset[orderedDataset.length-1];
 
     svg.selectAll("rect")
-        .data(orderedDataset)
+        .data(shortenedDataset)
         .enter().append("rect")
         .attr("width",function(d) {
-                    return Math.abs(parseInt(d.labour_diff));
+                    return Math.abs(parseInt(d[selectedAttr]));
             })
         .attr("height",20)
         .attr("fill","purple")
         .attr("x",function(d) {
-            return Math.sign(parseInt(d.labour_diff))==1 ? w/2 : w/2+parseInt(d.labour_diff);
+            return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 : w/2+parseInt(d[selectedAttr]);
             })
         .attr("y",function(d, i) {
-            return i*21;
+            return i>=3 ? i*21 + 42 : i*21;
             })
         .attr("fill",function(d, i) {
-            return i==0 ? "green" : i==orderedDataset.length-1 ? "red" : "blue"
+            return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue"
             });
 
+
+	         // Add text numbers in bar
+	svg.selectAll("text")
+		.data(shortenedDataset)
+		.enter()
+		.append("text")
+	    .attr("x", function(d) {  
+	    	return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 +parseInt(d[selectedAttr]) : w/2+parseInt(d[selectedAttr]) - 35;
+	     })
+	    .attr("y", function(d, i) {
+            return i>=3 ? i*21 + 42 + 14 : i*21+14;
+            })
+	    .text(function(d) { return d[selectedAttr]; });
+
+                // Add text label in bar
+                
+	svg.append("text")
+	    .data(shortenedDataset)
+		.enter()
+		.append("text")
+	    .attr("x", function(d) {  
+	    	return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 : w/2+parseInt(d[selectedAttr]);
+	     })
+	    .attr("y", function(d, i) {
+            return i>=3 ? i*21 + 42 : i*21;
+            })
+	    .text(function(d) { return d.country; });
+	    
+	   
+}
+
+function updateHorizontalDivergentBar() {
+	var margin = {top: 20, right: 20, bottom: 30, left: 200};
+    var w = 960 - margin.left - margin.right;
+    var h = 500 - margin.top - margin.bottom;
+
+	var selectedAttr = $('.selected').attr("data-id");
+
+    var svg = visualizations.task4.svg;
+
+    var comparingFunction = function compareNumbers(a, b) {
+        return parseInt(b[selectedAttr]) - parseInt(a[selectedAttr]);
+        };
+
+//este shortenedDataset pode ser calculado no inicio para ambos os casos (edu e labour diff) e dps reutilziava esses
+    var orderedDataset = full_dataset;
+    orderedDataset = orderedDataset.sort(comparingFunction);
+
+    var shortenedDataset = [];
+    shortenedDataset[0] = orderedDataset[0];
+    shortenedDataset[1] = orderedDataset[1];
+    shortenedDataset[2] = orderedDataset[2];
+    shortenedDataset[3] = orderedDataset[orderedDataset.length-3];
+    shortenedDataset[4] = orderedDataset[orderedDataset.length-2];
+    shortenedDataset[5] = orderedDataset[orderedDataset.length-1];
+
+    svg.selectAll("rect")
+        .data(shortenedDataset)
+        .style("visibility", function(d) {
+                return "visible";
+              })
+        .transition()	
+        .duration(1000)	
+        .attr("width",function(d) {
+                    return Math.abs(parseInt(d[selectedAttr]));
+            })
+        .attr("height",20)
+        .attr("fill","purple")
+        .attr("x",function(d) {
+            return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 : w/2+parseInt(d[selectedAttr]);
+            })
+        .attr("y",function(d, i) {
+            return i>=3 ? i*21 + 42 : i*21;
+            })
+        .attr("fill",function(d, i) {
+            return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue"
+            });
+
+      	svg.selectAll("text")
+		.data(shortenedDataset)
+		.style("visibility", function(d) {
+                return "visible";
+              })
+		.transition()	
+        .duration(1000)	
+	    .attr("x", function(d) {  
+	    	return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 +parseInt(d[selectedAttr]) : w/2+parseInt(d[selectedAttr]) - 35;
+	     })
+	    .attr("y", function(d, i) {
+            return i>=3 ? i*21 + 42 + 14 : i*21+14;
+            })
+	    .text(function(d) {return d[selectedAttr]; });
+
+                // Add text label in bar
+                
+	svg.append("text")
+	    .data(shortenedDataset)
+		.style("visibility", function(d) {
+                return "visible";
+              })
+		.transition()	
+        .duration(1000)	
+	    .attr("x", function(d) {  
+	    	return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 : w/2+parseInt(d[selectedAttr]);
+	     })
+	    .attr("y", function(d, i) {
+            return i>=3 ? i*21 + 42 : i*21;
+            })
+	    .text(function(d) { return d.country; });
+}
+
+function hideHorizontalDivergentBar() {
+	var svg = visualizations.task4.svg;
+
+	svg.selectAll("rect")
+              .style("visibility", function(d) {
+                return "hidden";
+              })
+
+    svg.selectAll("text")
+              .style("visibility", function(d) {
+                return "hidden";
+              })
 }
 
 function initTask1(){
