@@ -1,7 +1,7 @@
 var full_dataset;
 var visualizations = {};
 var countryColors = ['#f50', '#0f5'];
-var attributeColors = {1: '#44f', 2:'#8f4'};
+var attributeColors = ['#7bf', '#fd4'];
 var attributes = [
     {col: 'gii_value', shortname:'GII Value', max:1},
     {col: 'mmr', shortname:'Maternal Mortality', max:-1},
@@ -31,7 +31,7 @@ function initializeData() {
         var max = attributes[attrIndex].max;
         if (max == -1) {
             for (var i = 0; i < full_dataset.length; ++i) {
-                var v = parseFloat(full_dataset[i][attr].replace(/,/g, '.'));
+                var v = parseValue(full_dataset[i][attr]);
                 if (Math.abs(v) > max)
                     max = Math.abs(v);
             }
@@ -104,7 +104,7 @@ function initTask2() {
 
         var axisGroup = svg.append('g').attr('class', 'axis-' + attr);
         var x0 = scaleX(attributes[attrIndex].shortname);
-        var yAxis = d3.svg.axis().scale(scaleY[attr]).orient("left").ticks(0, "f").tickValues([min, max]);
+        var yAxis = d3.svg.axis().scale(scaleY[attr]).orient("left").ticks(0, "f").tickValues(attr.endsWith('_diff') ? [min, 0, max] : [min, max]);
         axisGroup.append("g")
             .attr('transform','translate(' + (x0-8-0.5) + ', -0.5)')
             .attr('class', 'axis task2')
@@ -114,7 +114,7 @@ function initTask2() {
             .attr('fill', '#555')
             .attr('r', 5)
             .attr('cx', x0)
-            .attr('cy', function(d, i) { return scaleY[attr](parseFloat(d[attr].replace(/,/g, '.'))); })
+            .attr('cy', function(d, i) { return scaleY[attr](parseValue(d[attr], 4)); })
             .attr('attr', attr)
             .attr('country', function(d, i) { return i; })
             .attr('opacity', 0.12)
@@ -164,10 +164,10 @@ function updateTask2(countrySelectorNumber, selectedCountry) {
                 if (d[attrParent + '_male'] == '-1' || d[attr + '_female'] == '-1')
                     return -100000;
             }
-            return scaleY[attr](parseFloat(d[attr].replace(/,/g, '.')));
+            return scaleY[attr](parseValue(d[attr], 4));
         };
         selection.select('circle[attr="' + attr + '"]').attr('cy', centerY);
-        selection.select('text[attr="' + attr + '"]').attr('y',  centerY).text(function(d) { return Math.round(parseFloat(d[attr].replace(/,/g, '.'))*10)/10; });
+        selection.select('text[attr="' + attr + '"]').attr('y',  centerY).text(function(d) { return parseValue(d[attr], attr == 'gii_value' ? 3 : 1); });
         var y = function (d, i) {
             if (d[attr] == '-1')
                 return -100000;
@@ -176,7 +176,7 @@ function updateTask2(countrySelectorNumber, selectedCountry) {
                 if (d[attrParent + '_male'] == '-1' || d[attr + '_female'] == '-1')
                     return -100000;
             }
-            return parseInt(scaleY[attr](parseFloat(d[attr].replace(/,/g, '.')))) + 0.5;
+            return parseInt(scaleY[attr](parseValue(d[attr], 4))) + 0.5;
         };
         selection.select('line[attr="' + attr + '"]').attr('y1', y).attr('y2',  y);
     }
@@ -207,6 +207,11 @@ function changeVisualizations() {
     }
 }
 
+function parseValue(val, decimals) {
+  var exp = (decimals == undefined ? 10 : Math.pow(10, decimals));
+  return Math.round(parseFloat(val.replace(/,/g, '.'))*exp)/exp;
+}
+
 // from: http://bl.ocks.org/mbostock/7555321
 function wrap(text, width) {
     text.each(function() {
@@ -217,7 +222,7 @@ function wrap(text, width) {
             lineNumber = 0,
             lineHeight = 1.1, // ems
             y = text.attr("y"),
-            dy = parseFloat(text.attr("dy")),
+            dy = parseValue(text.attr("dy")),
             tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
         while (word = words.pop()) {
             line.push(word);
@@ -292,7 +297,7 @@ function initHorizontalDivergentBar() {
 	    .attr("y", function(d, i) {
             return i>=3 ? i*21 + 42 + 14 : i*21+14;
             })
-	    .text(function(d) { return d[selectedAttr]; });
+	    .text(function(d) { return parseValue(d[selectedAttr], 4); });
 
                 // Add text label in bar
                 
@@ -459,8 +464,8 @@ function initTask1(){
       .attr("id", "barCountry1")
       .attr("x", 0)
       .attr("width", 30)
-      .attr("y",height-parseFloat(data1))
-      .attr("height", parseFloat(data1))
+      .attr("y",height-parseValue(data1))
+      .attr("height", parseValue(data1))
       .attr("fill","#FF5500")
       .append("title")
         .text(data1);
@@ -469,18 +474,18 @@ function initTask1(){
       .attr("id", "barCountry2")
       .attr("x", 40)
       .attr("width", 30)
-      .attr("y",height-parseFloat(data2))
-      .attr("height", parseFloat(data2))
+      .attr("y",height-parseValue(data2))
+      .attr("height", parseValue(data2))
       .attr("fill","#00FF55");
     svg.append("text")
         .attr("id","task1label1")
         .attr("x", 0)
-        .attr("y", height - parseFloat(data1) - 10)
+        .attr("y", height - parseValue(data1) - 10)
         .text(data1);
     svg.append("text")
         .attr("id","task1label2")
         .attr("x", 40)
-        .attr("y", height - parseFloat(data2) - 10)
+        .attr("y", height - parseValue(data2) - 10)
         .text(data2);
 }
 
@@ -519,15 +524,15 @@ function updateTask1() {
     svg.select("#country2NameText").text(country2);
     var bar1 = svg.select("#barCountry1");
     var bar2 = svg.select("#barCountry2");
-    bar2.attr("y",height-parseFloat(data2))
-      .attr("height", parseFloat(data2));
-    bar1.attr("y",height-parseFloat(data1))
-      .attr("height", parseFloat(data1));
+    bar2.attr("y",height-parseValue(data2))
+      .attr("height", parseValue(data2));
+    bar1.attr("y",height-parseValue(data1))
+      .attr("height", parseValue(data1));
     var label1 = svg.select("#task1label1");
     var label2 = svg.select("#task1label2");
-    label1.attr("y", height - parseFloat(data1) - 10)
+    label1.attr("y", height - parseValue(data1) - 10)
         .text(data1);
-    label2.attr("y", height - parseFloat(data2) - 10)
+    label2.attr("y", height - parseValue(data2) - 10)
         .text(data2);
 }
 
@@ -537,7 +542,7 @@ function initialize() {
     initializeVisualizations();
 }
 
-$('#attribute-selection-one li').click(function() {
+$('#attribute-selection li').click(function() {
     var self = $(this);
     self.parent().children('.selected').removeClass('selected');
     self.addClass('selected');
