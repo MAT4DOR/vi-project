@@ -412,7 +412,7 @@ function hideHorizontalDivergentBar() {
 }
 
 function initTask1(){
-    var margin = {top: 20, right: 20, bottom: 30, left: 200},
+    var margin = {top: 150, right: 20, bottom: 150, left: 200},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -437,63 +437,116 @@ function initTask1(){
     var country2 = getSelectedText("country-selection-1");
     var data1;
     var data2;
+    var maxValue = 0;
+    var minValue = 0;
     var selectedAttr = $('.selected').attr("data-id");
     for(var i = 0; i < full_dataset.length; ++i) {
+        var parsedVal = parseValue(full_dataset[i][selectedAttr]); 
+        maxValue = Math.max(parsedVal, maxValue);
+        minValue = Math.min(parsedVal, minValue);
         if(full_dataset[i].country == country1){
-            data1 = full_dataset[i][selectedAttr];
+            data1 = parsedVal;
         }
         if(full_dataset[i].country == country2){
-            data2 = full_dataset[i][selectedAttr];
+            data2 = parsedVal;
         }
     }
-     
-      svg.append("g")
-          .append("text")
-            .attr("id", "country1NameText")
-            .attr("y", height + 20)
-            .attr("x", -100)
-            .text(country1);
+    
+    var highestExtreme = Math.max(Math.abs(minValue), maxValue);
+    var barMaxHeight = 60;
+    var valuesScale = barMaxHeight/highestExtreme;
+    var centerY = height + barMaxHeight/2.0;
+
+    svg.append("g")
+      .append("text")
+        .attr("id", "country1NameText")
+        .attr("y", centerY + 20)
+        .attr("x", -100)
+        .text(country1);
     svg.append("g")
       .append("text")
         .attr("id", "country2NameText")
-        .attr("y", height + 20)
+        .attr("y", centerY + 20)
         .attr("x", 100)
         .text(country2);
 
-    svg.append("rect")
-      .attr("class", "bar")
-      .attr("id", "barCountry1")
-      .attr("x", 0)
-      .attr("width", 30)
-      .attr("y",height-parseValue(data1))
-      .attr("height", parseValue(data1))
-      .attr("fill","#FF5500")
-      .append("title")
-        .text(data1);
-    svg.append("rect")
-      .attr("class", "bar")
-      .attr("id", "barCountry2")
-      .attr("x", 40)
-      .attr("width", 30)
-      .attr("y",height-parseValue(data2))
-      .attr("height", parseValue(data2))
-      .attr("fill","#00FF55");
-    svg.append("text")
+    if(data1>=0){
+        svg.append("rect")
+          .attr("class", "bar")
+          .attr("id", "barCountry1")
+          .attr("x", 0)
+          .attr("width", 30)
+          .attr("y",centerY - data1*valuesScale)
+          .attr("height", data1*valuesScale)
+          .attr("fill","#FF5500");
+    }else{
+        svg.append("rect")
+          .attr("class", "bar")
+          .attr("id", "barCountry1")
+          .attr("x", 0)
+          .attr("width", 30)
+          .attr("y",centerY)
+          .attr("height", Math.abs(data1*valuesScale))
+          .attr("fill","#FF5500");
+    }
+
+    if(data2>=0){
+         svg.append("rect")
+          .attr("class", "bar")
+          .attr("id", "barCountry2")
+          .attr("x", 40)
+          .attr("width", 30)
+          .attr("y",centerY - data2*valuesScale)
+          .attr("height", data2*valuesScale)
+          .attr("fill","#00FF55");
+    }else{
+         svg.append("rect")
+          .attr("class", "bar")
+          .attr("id", "barCountry2")
+          .attr("x", 40)
+          .attr("width", 30)
+          .attr("y",centerY)
+          .attr("height", Math.abs(data2*valuesScale))
+          .attr("fill","#00FF55");
+    }
+
+    if(data1 >= 0){
+        svg.append("text")
+            .attr("id","task1label1")
+            .attr("x", 0)
+            .attr("y", centerY - data1*valuesScale - 10)
+            .text(data1);
+    }else{
+       svg.append("text")
         .attr("id","task1label1")
         .attr("x", 0)
-        .attr("y", height - parseValue(data1) - 10)
-        .text(data1);
-    svg.append("text")
+        .attr("y", centerY - data1*valuesScale + 20)
+        .text(data1); 
+    }
+    if(data2 >= 0){
+        svg.append("text")
+            .attr("id","task1label2")
+            .attr("x", 40)
+            .attr("y", centerY - data2*valuesScale - 10)
+            .text(data2);
+    }else{
+       svg.append("text")
         .attr("id","task1label2")
         .attr("x", 40)
-        .attr("y", height - parseValue(data2) - 10)
-        .text(data2);
+        .attr("y", centerY - data2*valuesScale + 20)
+        .text(data2); 
+    }
+
+    svg.append('line')
+                .attr('x1', 0 - 2).attr('x2', 72)
+                .attr('y1', centerY).attr('y2', centerY)
+                .attr('stroke-width', 1).attr('stroke', 'black');
 }
 
 function updateTask1() {
     var svg = visualizations.task1.svg;
 
-    var margin = {top: 20, right: 20, bottom: 30, left: 200},
+    var margin = {top: 150, right: 20, bottom: 150, left: 200},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -511,30 +564,64 @@ function updateTask1() {
     var country2 = getSelectedText("country-selection-1");
     var data1;
     var data2;
+    var maxValue = 0;
+    var minValue = 0;
     var selectedAttr = $('.selected').attr("data-id");
     for(var i = 0; i < full_dataset.length; ++i) {
+        var parsedVal = parseValue(full_dataset[i][selectedAttr]); 
+        maxValue = Math.max(parsedVal, maxValue);
+        minValue = Math.min(parsedVal, minValue);
         if(full_dataset[i].country == country1){
-            data1 = full_dataset[i][selectedAttr];
+            data1 = parsedVal;
         }
         if(full_dataset[i].country == country2){
-            data2 = full_dataset[i][selectedAttr];
+            data2 = parsedVal;
         }
     }
+    
+    var highestExtreme = Math.max(Math.abs(minValue), maxValue);
+    var barMaxHeight = 60;
+    var valuesScale = (barMaxHeight/2)/highestExtreme;
+    var centerY = height + barMaxHeight/2.0;
 
     svg.select("#country1NameText").text(country1);
     svg.select("#country2NameText").text(country2);
+
     var bar1 = svg.select("#barCountry1");
+    if(data1>=0){
+        bar1.attr("y",centerY - data1*valuesScale)
+          .attr("height", data1*valuesScale);
+    }else{
+        bar1.attr("y",centerY)
+          .attr("height", Math.abs(data1*valuesScale));
+    }
+
     var bar2 = svg.select("#barCountry2");
-    bar2.attr("y",height-parseValue(data2))
-      .attr("height", parseValue(data2));
-    bar1.attr("y",height-parseValue(data1))
-      .attr("height", parseValue(data1));
+    if(data2>=0){
+        bar2.attr("y",centerY - data2*valuesScale)
+          .attr("height", data2*valuesScale);
+    }else{
+        bar2.attr("y",centerY)
+          .attr("height", Math.abs(data2*valuesScale));
+    }
+
     var label1 = svg.select("#task1label1");
+    if(data1 >= 0){
+        label1.attr("y", centerY - data1*valuesScale - 10)
+            .text(data1);
+    }else{
+        label1.attr("y", centerY - data1*valuesScale + 20)
+            .text(data1);
+    }
+
     var label2 = svg.select("#task1label2");
-    label1.attr("y", height - parseValue(data1) - 10)
-        .text(data1);
-    label2.attr("y", height - parseValue(data2) - 10)
-        .text(data2);
+    if(data2 >= 0){
+        label2.attr("y", centerY - data2*valuesScale - 10)
+            .text(data2);
+    }else{
+        label2.attr("y", centerY - data2*valuesScale + 20)
+            .text(data2);
+    }
 }
 
 function initialize() {
