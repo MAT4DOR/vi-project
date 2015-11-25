@@ -34,13 +34,13 @@ h1 {
     vertical-align: top;
 }
 
-.axis path, .axis line {
+svg line, .axis path {
     fill: none;
     stroke: black;
     shape-rendering: crispEdges;
 }
 
-.axis text, .axistext {
+svg text {
      font-family: calibri, sans-serif;
      font-size: 8pt;
  }

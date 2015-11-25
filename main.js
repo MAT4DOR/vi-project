@@ -18,7 +18,6 @@ var attributes = [
 var dsv = d3.dsv(';', 'text/plain');
 dsv('gender_inequality.csv', function (data) {
     full_dataset = data;
-    console.log(data);
     initialize();
 });
 
@@ -77,6 +76,7 @@ function initTask2() {
     var options = {
         width: 800,
         height: 400,
+        paddingTop: 30,
         padding: 60,
         paddingH: 40
     }
@@ -87,29 +87,55 @@ function initTask2() {
 
     var scaleX = d3.scale.ordinal().rangeRoundBands([options.paddingH, options.width - options.paddingH]);
     scaleX.domain(attributes.map(function(d) { return d.shortname; }));
+    for (var attrNum = 0; attrNum < attributeColors.length; ++attrNum) {
+        svg.append('rect')
+            .attr('x', -1000)
+            .attr('y', 2)
+            .attr('width', scaleX.rangeBand())
+            .attr('height', options.height-4)
+            .attr('fill', attributeColors[attrNum])
+            .attr('opacity', 0.80)
+            .attr('attr-num', (attrNum+1));
+    }
+
     var xAxis = d3.svg.axis().scale(scaleX).orient('bottom');
-    svg.append('g')
+    var xAxisText = svg.append('g')
         .attr('class', 'axis task2')
-        .attr('transform', 'translate(-' + scaleX.rangeBand()/2 + ',' + (options.height-options.padding+10) + ')')
+        .attr('transform', 'translate(-' + scaleX.rangeBand()/2 + ',' + (options.height-options.padding+20) + ')')
         .call(xAxis)
-        .selectAll('.tick text')
-        .call(wrap, scaleX.rangeBand());
+        .selectAll('.tick text');
+    xAxisText.on('click', function() {
+        var text = $(this).text();
+        console.log(text);
+        var attr = undefined;
+        for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
+            if (attributes[attrIndex].shortname.replace(/ /g, '') == text.replace(/ /g, ''))
+                attr = attributes[attrIndex].col;
+        }
+        if (attr != undefined) {
+            $('#attribute-selection-1 li[data-id="' + attr + '"]').trigger('click');
+        }
+    });
+    xAxisText.call(wrap, scaleX.rangeBand());
 
     var scaleY = {};
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
         var attr = attributes[attrIndex].col;
         var max = attributes[attrIndex].max;
         var min = attr.endsWith('_diff') ? -max : 0;
-        scaleY[attr] = d3.scale.linear().domain([max, min]).range([options.padding,options.height-options.padding]);
+        scaleY[attr] = d3.scale.linear().domain([max, min]).range([options.paddingTop,options.height-options.padding]);
 
         var axisGroup = svg.append('g').attr('class', 'axis-' + attr);
         var x0 = scaleX(attributes[attrIndex].shortname);
-        
-        var yAxis = d3.svg.axis().scale(scaleY[attr]).orient("left").ticks(0, "f").tickValues(attr.endsWith('_diff') ? [min, 0, max] : [min, max]);
-        axisGroup.append("g")
-            .attr('transform','translate(' + (x0-8-0.5) + ', -0.5)')
+
+        var scaleYAxis = d3.scale.linear().domain([max, min]).range([options.paddingTop-10,options.height-options.padding+10]);
+        var yAxis = d3.svg.axis().scale(scaleYAxis).orient("left").ticks(0, "f").tickValues(attr.endsWith('_diff') ? [min, 0, max] : [min, max]);
+        var axis = axisGroup.append("g")
+            .attr('transform','translate(' + x0 + ', -0.5)')
             .attr('class', 'axis task2')
             .call(yAxis);
+        axis.selectAll('line').remove();
+        axis.selectAll('text').attr('x', 0).attr('style', 'text-anchor: middle');
 
         enterSelection.append('circle').attr('class', 'to-remove').filter(function (d) { return d[attr] != -1; })
             .attr('fill', '#555')
@@ -123,7 +149,7 @@ function initTask2() {
     }
 
     svg.selectAll('circle.to-remove').remove();
-    visualizations.task2 = { options: options, attributes: attributes, svg: svg, scaleY: scaleY };
+    visualizations.task2 = { options: options, attributes: attributes, svg: svg, scaleY: scaleY, scaleX: scaleX };
     for (var countrySelectorNumber = 0; countrySelectorNumber < countryColors.length; ++countrySelectorNumber) {
         var group = svg.append('g').attr('class', 'selector-' + countrySelectorNumber);
         for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
@@ -181,6 +207,22 @@ function updateTask2(countrySelectorNumber, selectedCountry) {
         };
         selection.select('line[attr="' + attr + '"]').attr('y1', y).attr('y2',  y);
     }
+}
+
+function findShortname(attr) {
+    for(var i = 0; i < attributes.length; ++i) {
+        if (attributes[i].col == attr)
+            return attributes[i].shortname;
+    }
+    return undefined;
+}
+
+function updateAttributeTask2(attributeNum, selectedAttribute) {
+    var svg = visualizations.task2.svg;
+    var scaleX = visualizations.task2.scaleX;
+    var shortname = findShortname(selectedAttribute);
+    svg.select('rect[attr-num="' + attributeNum + '"]')
+        .attr('x', shortname != undefined ? scaleX(shortname) - scaleX.rangeBand() / 2 : -10000);
 }
 
 function changeSelectedCountry(countrySelectorNumber, selectedCountry) {
@@ -634,6 +676,8 @@ $('#attribute-selection li').click(function() {
     var self = $(this);
     self.parent().children('.selected').removeClass('selected');
     self.addClass('selected');
+
+    updateAttributeTask2(self.parent().attr('data-id'), self.attr('data-id'));
     changeVisualizations();
 });
 
