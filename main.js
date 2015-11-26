@@ -457,8 +457,8 @@ function hideHorizontalDivergentBar() {
 }
 
 function initTask1(){
-    var margin = {top: 50, right: 20, bottom: 180, left: 100},
-    width = 300 - margin.left - margin.right,
+    var margin = {top: 50, right: 20, bottom: 180, left: 150},
+    width = 350 - margin.left - margin.right,
     height = 220 - margin.top - margin.bottom;
     var barMaxHeight = 120;
     var centerY = height + barMaxHeight/2.0;
@@ -473,13 +473,15 @@ function initTask1(){
     svg.append("text")
         .attr("id", "country0NameText")
         .attr("x", -5)
+        .attr("y", centerY)
         .attr("text-anchor","end")
         .text("");
 
     svg.append("text")
         .attr("id", "country1NameText")
-        .attr("text-anchor","start")
         .attr("x", 75)
+        .attr("y", centerY)
+        .attr("text-anchor","start")
         .text("");
 
     svg.append("rect")
@@ -535,8 +537,10 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     }
     if(isUnavailable){
         var bar = svg.select("#barCountry"+countrySelectorNumber);
-                bar.attr("y", 0)
-                  .attr("height", 0);
+                bar.transition()   
+                    .duration(1000)
+                    .attr("height", 0)
+                    .attr("y", centerY);
 
         var label = svg.select("#task1label"+countrySelectorNumber);
             label.attr("y", centerY)
@@ -558,12 +562,16 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     var valuesScale = (barMaxHeight/2)/highestExtreme;
 
     var bar = svg.select("#barCountry"+countrySelectorNumber);
-        bar.attr("y", Math.min(centerY, centerY - attrValue*valuesScale))
-          .attr("height", Math.abs(attrValue*valuesScale));
+        bar.transition()   
+           .duration(1000)
+          .attr("height", Math.abs(attrValue*valuesScale))
+          .attr("y", Math.min(centerY, centerY - attrValue*valuesScale));
 
     var label = svg.select("#task1label"+countrySelectorNumber);
-    label.attr("y", attrValue>=0 ? (centerY - attrValue*valuesScale - 10) : (centerY - attrValue*valuesScale + 20))
-        .text(attrValue);
+    label.text(attrValue)
+            .transition()   
+            .duration(1000)
+            .attr("y", attrValue>=0 ? (centerY - attrValue*valuesScale - 10) : (centerY - attrValue*valuesScale + 20));
 
     var line = svg.select("#task1line");
     line.attr('y1', centerY).attr('y2', centerY);
