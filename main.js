@@ -522,7 +522,8 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     var selectedAttr = $('.selected').attr("data-id");
     var selectedRow = full_dataset[selectedCountry];
     var attrValue = parseValue(selectedRow[selectedAttr]);
-    
+
+    svg.select("#country"+countrySelectorNumber+"NameText").text(selectedRow["country"]);
     var isUnavailable = false;
     if(selectedAttr.endsWith("_diff")){
         var attrParent = selectedAttr.substr(0, selectedAttr.indexOf('_diff'));
@@ -555,8 +556,6 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     var barMaxHeight = 120;
     var centerY = height + barMaxHeight/2.0;
     var valuesScale = (barMaxHeight/2)/highestExtreme;
-    
-    svg.select("#country"+countrySelectorNumber+"NameText").text(selectedRow["country"]);
 
     var bar = svg.select("#barCountry"+countrySelectorNumber);
         bar.attr("y", Math.min(centerY, centerY - attrValue*valuesScale))
