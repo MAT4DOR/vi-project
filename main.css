@@ -48,3 +48,16 @@ svg text {
 .axis.task2 .domain {
     display: none;
 }
+
+section {
+    width: 100%
+    margin: auto;
+    padding: 10px;
+}
+div#task2 {
+    width: 100%;
+    float: left;
+}
+div#task1 {
+    margin-left: 110%;
+}
