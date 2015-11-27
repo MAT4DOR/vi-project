@@ -4,6 +4,7 @@ var countryColors = ['#f50', '#0f5'];
 var attributeColors = ['#7bf', '#fd4'];
 var attributes = [
     {col: 'gii_value', shortname:'GII Value', max:1},
+    {col: 'gii_rank', shortname:'GII Rank', max:1},
     {col: 'mmr', shortname:'Maternal Mortality', max:-1},
     {col: 'abr', shortname:'Adolencent Births', max:-1},
     {col: 'ssp', shortname:'Seats Parliament', max:100},
@@ -36,6 +37,39 @@ function initializeData() {
             }
         }
         attributes[attrIndex].max = max;
+        var orderedDataset = full_dataset.slice();
+        orderedDataset = orderedDataset.sort(function (a, b) {
+            if(attr.endsWith('_diff'))
+                return Math.abs(parseValue(a[attr], 4)) - Math.abs(parseValue(b[attr], 4));
+            else if (attr == 'ssp')
+                return Math.abs(50 - parseValue(a[attr], 4)) - Math.abs(50 - parseValue(b[attr], 4));
+            else if (['edu_female', 'edu_male', 'labour_female', 'labour_male'].indexOf(attr) != -1) // ordered more to less
+                return parseValue(b[attr], 4) - parseValue(a[attr], 4);
+            else
+                return parseValue(a[attr], 4) - parseValue(b[attr], 4);
+        });
+
+        var validSeen = 0;
+        var rank = 0;
+        var lastValueRank = undefined;
+        for (var i = 0; i < orderedDataset.length; ++i) {
+            var d = orderedDataset[i];
+            if (d[attr] == '-1')
+                continue;
+            if (attr.endsWith('_diff')) {
+                var attrParent = attr.substr(0, attr.indexOf('_diff'));
+                if (d[attrParent + '_male'] == '-1' || d[attrParent + '_female'] == '-1')
+                    continue;
+            }
+            validSeen++;
+            var dVal = parseValue(d[attr], 4);
+            if (dVal != lastValueRank) {
+                lastValueRank = dVal;
+                rank = validSeen;
+            }
+            d['rank_' + attr] = rank;
+        }
+        attributes[attrIndex].maxRank = validSeen;
     }
 }
 
@@ -78,7 +112,8 @@ function initTask2() {
         height: 400,
         paddingTop: 30,
         padding: 60,
-        paddingH: 40
+        paddingH: 40,
+        notInteresting: ['gii_rank', 'human-development']
     }
     var svg = d3.select('#task2').append('svg');
     svg.attr('width', options.width).attr('height', options.height);
@@ -86,7 +121,11 @@ function initTask2() {
     var enterSelection = svg.selectAll('circle').data(full_dataset).enter();
 
     var scaleX = d3.scale.ordinal().rangeRoundBands([options.paddingH, options.width - options.paddingH]);
-    scaleX.domain(attributes.map(function(d) { return d.shortname; }));
+    scaleX.domain(attributes.map(function(d) {
+        if (options.notInteresting.indexOf(d.col) != -1)
+            return undefined;
+        return d.shortname;
+    }).filter(function(n){ return n != undefined }));
     for (var attrNum = 0; attrNum < attributeColors.length; ++attrNum) {
         svg.append('rect')
             .attr('x', -1000)
@@ -122,6 +161,8 @@ function initTask2() {
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
         var attr = attributes[attrIndex].col;
         var max = attributes[attrIndex].max;
+        if (options.notInteresting.indexOf(attr) != -1)
+            continue;
         var min = attr.endsWith('_diff') ? -max : 0;
         scaleY[attr] = d3.scale.linear().domain([max, min]).range([options.paddingTop,options.height-options.padding]);
 
@@ -154,20 +195,23 @@ function initTask2() {
         var group = svg.append('g').attr('class', 'selector-' + countrySelectorNumber);
         for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
             var attr = attributes[attrIndex].col;
+            if (options.notInteresting.indexOf(attr) != -1)
+                continue;
             var x0 = scaleX(attributes[attrIndex].shortname);
+            var farValue = scaleY[attr](0);
             group.append('circle')
                 .attr('fill', countryColors[countrySelectorNumber])
                 .attr('r', 5)
                 .attr('cx', x0)
-                .attr('cy', -10000)
+                .attr('cy', farValue)
                 .attr('opacity', 0.6)
-                .attr('attr', attr);
+                .attr('attr', attr).append('title').text('');
 
             group.append('line')
                 .attr('x1', x0 + (countrySelectorNumber % 2 == 0 ? -2 : 2)).attr('x2', x0 + (countrySelectorNumber % 2 == 0 ? -8 : 8))
-                .attr('y1', -10000).attr('y2', -10000)
+                .attr('y1', farValue).attr('y2', farValue)
                 .attr('stroke-width', 1).attr('stroke', 'black').attr('attr', attr);
-            group.append('text').attr('x', x0 + (countrySelectorNumber % 2 == 0 ? -10 : 10) - 0.5).attr('y', -10000)
+            group.append('text').attr('x', x0 + (countrySelectorNumber % 2 == 0 ? -10 : 10) - 0.5).attr('y', farValue)
                 .attr('class', 'axistext').attr('dy', '.32em')
                 .attr('fill', 'black').attr('text-anchor', countrySelectorNumber % 2 == 0 ? 'end' : 'start').text('').attr('attr', attr);
         }
@@ -183,36 +227,39 @@ function updateTask2(countrySelectorNumber, selectedCountry) {
     var selection = svg.selectAll('g.selector-' + countrySelectorNumber).data([full_dataset[selectedCountry]]);
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
         var attr = attributes[attrIndex].col;
+        if (options.notInteresting.indexOf(attr) != -1)
+            continue;
         var centerY = function (d, i) {
             if (d[attr] == '-1')
-                return -100000;
+                return -2000;
             if (attr.endsWith('_diff')) {
                 var attrParent = attr.substr(0, attr.indexOf('_diff'));
                 if (d[attrParent + '_male'] == '-1' || d[attrParent + '_female'] == '-1')
-                    return -100000;
+                    return -2000;
             }
             return scaleY[attr](parseValue(d[attr], 4));
         };
-        selection.select('circle[attr="' + attr + '"]').attr('cy', centerY);
-        selection.select('text[attr="' + attr + '"]').attr('y',  centerY).text(function(d) { return parseValue(d[attr], attr == 'gii_value' ? 3 : 1); });
+        selection.select('circle[attr="' + attr + '"]').transition().duration(1000).attr('cy', centerY);
+        selection.select('circle[attr="' + attr + '"] title').text(function(d) { return d['rank_' + attr] + '/' + attributes[attrIndex].maxRank; });
+        selection.select('text[attr="' + attr + '"]').text(function(d) { return parseValue(d[attr], attr == 'gii_value' ? 3 : 1); }).transition().duration(1000).attr('y',  centerY);
         var y = function (d, i) {
             if (d[attr] == '-1')
-                return -100000;
+                return -2000;
             if (attr.endsWith('_diff')) {
                 var attrParent = attr.substr(0, attr.indexOf('_diff'));
                 if (d[attrParent + '_male'] == '-1' || d[attrParent + '_female'] == '-1')
-                    return -100000;
+                    return -2000;
             }
             return parseInt(scaleY[attr](parseValue(d[attr], 4))) + 0.5;
         };
-        selection.select('line[attr="' + attr + '"]').attr('y1', y).attr('y2',  y);
+        selection.select('line[attr="' + attr + '"]').transition().duration(1000).attr('y1', y).attr('y2',  y);
     }
 }
 
-function findShortname(attr) {
+function findAttributeByCol(attr) {
     for(var i = 0; i < attributes.length; ++i) {
         if (attributes[i].col == attr)
-            return attributes[i].shortname;
+            return attributes[i];
     }
     return undefined;
 }
@@ -220,7 +267,11 @@ function findShortname(attr) {
 function updateAttributeTask2(attributeNum, selectedAttribute) {
     var svg = visualizations.task2.svg;
     var scaleX = visualizations.task2.scaleX;
-    var shortname = findShortname(selectedAttribute);
+    var options = visualizations.task2.options;
+    var attribute = findAttributeByCol(selectedAttribute);
+    if (options.notInteresting.indexOf(attribute.col) != -1)
+        return;
+    var shortname = attribute.shortname;
     svg.select('rect[attr-num="' + attributeNum + '"]')
         .attr('x', shortname != undefined ? scaleX(shortname) - scaleX.rangeBand() / 2 : -10000);
 }
@@ -528,14 +579,14 @@ function initTask1(){
       .attr("id", "barCountry0")
       .attr("x", 0)
       .attr("width", 30)
-      .attr("fill","#FF5500");
+      .attr("fill","#FF5500").append('title').text('');
 
      svg.append("rect")
       .attr("class", "bar")
       .attr("id", "barCountry1")
       .attr("x", 40)
       .attr("width", 30)
-      .attr("fill","#00FF55");
+      .attr("fill","#00FF55").append('title').text('');
 
     svg.append("text")
         .attr("id","task1label0")
@@ -576,10 +627,11 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     }
     if(isUnavailable){
         var bar = svg.select("#barCountry"+countrySelectorNumber);
-                bar.transition()   
-                    .duration(1000)
-                    .attr("height", 0)
-                    .attr("y", centerY);
+        bar.transition()
+            .duration(1000)
+            .attr("height", 0)
+            .attr("y", centerY);
+        bar.select('title').text('');
 
         var label = svg.select("#task1label"+countrySelectorNumber);
             label.attr("y", centerY)
@@ -601,10 +653,11 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     var valuesScale = (barMaxHeight/2)/highestExtreme;
 
     var bar = svg.select("#barCountry"+countrySelectorNumber);
-        bar.transition()   
-           .duration(1000)
-          .attr("height", Math.abs(attrValue*valuesScale))
-          .attr("y", Math.min(centerY, centerY - attrValue*valuesScale));
+    bar.transition()
+       .duration(1000)
+      .attr("height", Math.abs(attrValue*valuesScale))
+      .attr("y", Math.min(centerY, centerY - attrValue*valuesScale));
+    bar.select('title').text(selectedRow['rank_' + selectedAttr] + '/' + findAttributeByCol(selectedAttr).maxRank);
 
     var label = svg.select("#task1label"+countrySelectorNumber);
     label.text(attrValue)
