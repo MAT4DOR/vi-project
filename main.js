@@ -345,68 +345,11 @@ function initHorizontalDivergentBar() {
 
     visualizations.task4 = {svg: svg};
 
-    var diffSelected = ['edu_diff', 'labour_diff'].indexOf(selectedAttr);
-    var comparingFunction = function compareNumbers(a, b) {
-        if(diffSelected >= 0)
-            return Math.abs(parseValue(a[selectedAttr],4)) - Math.abs(parseValue(b[selectedAttr],4));
-        else if (['gii_rank', 'gii_value', 'mmr', 'abr'].indexOf(selectedAttr) >= 0)
-            return parseValue(a[selectedAttr],4) - parseValue(b[selectedAttr],4) ;
-        else
-            return parseValue(b[selectedAttr],4) - parseValue(a[selectedAttr],4);
-    };
-
-    var orderedDataset = full_dataset.slice();
-    orderedDataset = orderedDataset.sort(comparingFunction);
-
-//este shortenedDataset pode ser calculado no inicio para ambos os casos (edu e labour diff) e dps reutilziava esses
-    var shortenedDataset = [];
-
-    var startOfSmaller = orderedDataset.length-1;
-    for(var i = 0; i < orderedDataset.length; i++){
-        if((diffSelected<0 && orderedDataset[i][selectedAttr] != -1) || (diffSelected>=0 && orderedDataset[i][selectedAttr] != 0)){
-            startOfSmaller = i;
-            break;
-        }
-    }
-
-    shortenedDataset[0] = orderedDataset[startOfSmaller];
-    shortenedDataset[1] = orderedDataset[startOfSmaller+1];
-    shortenedDataset[2] = orderedDataset[startOfSmaller+2];
-
-
-    var startOfSmaller = orderedDataset.length-1;
-    for(var i = orderedDataset.length-1; i >= 0; i--){
-        if((diffSelected<0 && orderedDataset[i][selectedAttr] != -1) || (diffSelected>=0  && orderedDataset[i][selectedAttr] != 0)){
-            startOfSmaller = i;
-            break;
-        }
-    }
-
-    shortenedDataset[3] = orderedDataset[startOfSmaller-2];
-    shortenedDataset[4] = orderedDataset[startOfSmaller-1];
-    shortenedDataset[5] = orderedDataset[startOfSmaller];
-
-    var x = d3.scale.linear()
-                .domain([shortenedDataset[5][selectedAttr], shortenedDataset[0][selectedAttr]])
-                .range([0, w]);
-
+    var shortenedDataset = [0, 1, 2, 3, 4, 5]; // 6 dummy objects to init the svg
     svg.selectAll("rect")
         .data(shortenedDataset)
         .enter().append("rect")
-        .attr("width",function(d) {
-                    return Math.abs(parseValue(d[selectedAttr], 4));
-            })
-        .attr("height",20)
-        .attr("fill","purple")
-        .attr("x",function(d) {
-            return Math.sign(parseValue(d[selectedAttr],4))==1 ? w/2 : w/2+parseValue(d[selectedAttr],4);
-            })
-        .attr("y",function(d, i) {
-            return i>=3 ? i*(21 + 16) + 42 : i*(21 + 16);
-            })
-        .attr("fill",function(d, i) {
-            return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue"
-            });
+        .attr("fill","white");
 
 
     // Add text numbers in bar
@@ -414,29 +357,16 @@ function initHorizontalDivergentBar() {
         .data(shortenedDataset)
         .enter()
         .append("text")
-        .attr("class", "t4Values")
-        .attr("x", function(d) {  
-            return Math.sign(parseValue(d[selectedAttr]),4)==1 ? w/2 +parseValue(d[selectedAttr],4) : w/2+parseValue(d[selectedAttr],4) - 35;
-         })
-        .attr("y", function(d, i) {
-            return i>=3 ? i*(21 + 16) + 42 + 14 : i*(21 + 16)+14;
-            })
-        .text(function(d) { return parseValue(d[selectedAttr], 3); });
+        .attr("class", "t4Values");
 
     // Add text label in bar
     svg.selectAll("text.t4Names")
         .data(shortenedDataset)
         .enter()
         .append("text")
-        .attr("class", "t4Names")
-        .attr("x", function(d) {  
-            return Math.sign(parseValue(d[selectedAttr]),4)==1 ? w/2 +parseValue(d[selectedAttr],4) : w/2+parseValue(d[selectedAttr],4) - 35;
-         })
-        .attr("y", function(d, i) {
-            return i>=3 ? i*(21 + 16) + 42 + 14 + 16: i*(21 + 16)+14+ 16;
-            })
-        .text(function(d) { return d.country; });
-        
+        .attr("class", "t4Names");
+
+    updateHorizontalDivergentBar();
 }
 
 function updateHorizontalDivergentBar() {
@@ -466,10 +396,16 @@ function updateHorizontalDivergentBar() {
 
     var startOfSmaller = orderedDataset.length-1;
     for(var i = 0; i < orderedDataset.length; i++){
-        if(orderedDataset[i][selectedAttr] != -1){
-            startOfSmaller = i;
-            break;
+        var d = orderedDataset[i];
+        if (d[selectedAttr] == '-1')
+            continue;
+        if (selectedAttr.endsWith('_diff')) {
+            var attrParent = selectedAttr.substr(0, selectedAttr.indexOf('_diff'));
+            if (d[attrParent + '_male'] == '-1' || d[attrParent + '_female'] == '-1')
+                continue;
         }
+        startOfSmaller = i;
+        break;
     }
 
     shortenedDataset[0] = orderedDataset[startOfSmaller];
@@ -478,35 +414,37 @@ function updateHorizontalDivergentBar() {
 
     var startOfSmaller = orderedDataset.length-1;
     for(var i = orderedDataset.length-1; i >= 0; i--){
-        if(orderedDataset[i][selectedAttr] != -1){
-            startOfSmaller = i;
-            break;
+        var d = orderedDataset[i];
+        if (d[selectedAttr] == '-1')
+            continue;
+        if (selectedAttr.endsWith('_diff')) {
+            var attrParent = selectedAttr.substr(0, selectedAttr.indexOf('_diff'));
+            if (d[attrParent + '_male'] == '-1' || d[attrParent + '_female'] == '-1')
+                continue;
         }
+        startOfSmaller = i;
+        break;
     }
 
     shortenedDataset[3] = orderedDataset[startOfSmaller-2];
     shortenedDataset[4] = orderedDataset[startOfSmaller-1];
     shortenedDataset[5] = orderedDataset[startOfSmaller];
 
+    var max = Math.max(Math.abs(parseValue(shortenedDataset[0][selectedAttr], 4)), Math.abs(parseValue(shortenedDataset[5][selectedAttr], 4)));
     var x = d3.scale.linear()
-                .domain([shortenedDataset[5][selectedAttr], shortenedDataset[0][selectedAttr]])
-                .range([0, w]);
-
+                .domain([-max, max])
+                .range([100, w-100]).nice();
     svg.selectAll("rect")
         .data(shortenedDataset)
-        .style("visibility", function(d) {
-                return "visible";
-              })
-        .style("width", function(d) { return x(d) + "px"; })
         .transition()   
         .duration(1000) 
         .attr("width",function(d) {
-                    return Math.abs(parseInt(d[selectedAttr]));
+                    return Math.abs(x(parseValue(d[selectedAttr], 4)) - x(0));
             })
         .attr("height",20)
         .attr("fill","purple")
         .attr("x",function(d) {
-            return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 : w/2+parseInt(d[selectedAttr]);
+            return x(Math.min(parseValue(d[selectedAttr], 4), 0));
             })
         .attr("y",function(d, i) {
             return i>=3 ? i*(21 + 16) + 42 : i*(21 + 16);
@@ -515,16 +453,14 @@ function updateHorizontalDivergentBar() {
             return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue"
             });
 
-        svg.selectAll("text.t4Values")
+    svg.selectAll("text.t4Values")
         .data(shortenedDataset)
-        .style("visibility", function(d) {
-                return "visible";
-              })
         .transition()   
         .duration(1000) 
         .attr("x", function(d) {  
-            return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 +parseInt(d[selectedAttr]) : w/2+parseInt(d[selectedAttr]) - 35;
+            return x(parseValue(d[selectedAttr], 4)) + Math.sign(parseValue(d[selectedAttr], 4)) * 10;
          })
+        .attr('text-anchor', function(d) { return Math.sign(parseValue(d[selectedAttr], 4)) > 0 ? 'start' : 'end'})
         .attr("y", function(d, i) {
             return i>=3 ? i*(21 + 16) + 42 + 14 : i*(21 + 16)+14;
             })
@@ -538,10 +474,11 @@ function updateHorizontalDivergentBar() {
                 return "visible";
               })
         .transition()   
-        .duration(1000) 
-        .attr("x", function(d) { 
-            return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 : w/2+parseInt(d[selectedAttr]);
+        .duration(1000)
+        .attr("x", function(d) {
+            return x(0);
          })
+        .attr('text-anchor', function(d) { return Math.sign(parseValue(d[selectedAttr], 4)) > 0 ? 'start' : 'end'})
         .attr("y", function(d, i) {
             return i>=3 ? i*(21 + 16) + 42 + 14 + 16: i*(21 + 16)+14+ 16;
             })
