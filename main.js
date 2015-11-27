@@ -126,9 +126,10 @@ function initTask2() {
             return undefined;
         return d.shortname;
     }).filter(function(n){ return n != undefined }));
+
     for (var attrNum = 0; attrNum < attributeColors.length; ++attrNum) {
         svg.append('rect')
-            .attr('x', -1000)
+            .attr('x', -scaleX.rangeBand())
             .attr('y', 2)
             .attr('width', scaleX.rangeBand())
             .attr('height', options.height-4)
@@ -144,6 +145,10 @@ function initTask2() {
         .call(xAxis)
         .selectAll('.tick text')
         .call(wrap, scaleX.rangeBand());
+
+    for (var attrNum = 0; attrNum < attributeColors.length; ++attrNum) {
+        svg.select('rect[attr-num="' + attrNum + '"]').attr('x', -scaleX.rangeBand());
+    }
 
     var scaleY = {};
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
@@ -269,11 +274,13 @@ function updateAttributeTask2(attributeNum, selectedAttribute) {
     var scaleX = visualizations.task2.scaleX;
     var options = visualizations.task2.options;
     var attribute = findAttributeByCol(selectedAttribute);
-    if (options.notInteresting.indexOf(attribute.col) != -1)
+    if (options.notInteresting.indexOf(attribute.col) != -1) {
+        svg.select('rect[attr-num="' + attributeNum + '"]').transition().duration(500).attr('x', -scaleX.rangeBand());
         return;
+    }
     var shortname = attribute.shortname;
-    svg.select('rect[attr-num="' + attributeNum + '"]')
-        .attr('x', shortname != undefined ? scaleX(shortname) - scaleX.rangeBand() / 2 : -10000);
+    svg.select('rect[attr-num="' + attributeNum + '"]').transition().duration(500)
+        .attr('x', shortname != undefined ? scaleX(shortname) - scaleX.rangeBand() / 2 : -scaleX.rangeBand());
 }
 
 function changeSelectedCountry(countrySelectorNumber, selectedCountry) {
