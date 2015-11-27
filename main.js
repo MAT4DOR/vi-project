@@ -142,20 +142,8 @@ function initTask2() {
         .attr('class', 'axis task2')
         .attr('transform', 'translate(-' + scaleX.rangeBand()/2 + ',' + (options.height-options.padding+20) + ')')
         .call(xAxis)
-        .selectAll('.tick text');
-    xAxisText.on('click', function() {
-        var text = $(this).text();
-        console.log(text);
-        var attr = undefined;
-        for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
-            if (attributes[attrIndex].shortname.replace(/ /g, '') == text.replace(/ /g, ''))
-                attr = attributes[attrIndex].col;
-        }
-        if (attr != undefined) {
-            $('#attribute-selection-1 li[data-id="' + attr + '"]').trigger('click');
-        }
-    });
-    xAxisText.call(wrap, scaleX.rangeBand());
+        .selectAll('.tick text')
+        .call(wrap, scaleX.rangeBand());
 
     var scaleY = {};
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
@@ -187,6 +175,18 @@ function initTask2() {
             .attr('country', function(d, i) { return i; })
             .attr('opacity', 0.12)
             .attr('class', '');
+        
+        var shortname = attributes[attrIndex].shortname;
+        svg.append('rect')
+            .attr('x', scaleX(shortname)-scaleX.rangeBand()/2)
+            .attr('y', 2)
+            .attr('width', scaleX.rangeBand())
+            .attr('height', options.height - 4)
+            .attr('fill', 'red')
+            .attr('opacity', 0.0)
+            .attr('attr', attr).on('click', function() {
+            $('#attribute-selection-1 li[data-id="' + $(this).attr('attr') + '"]').trigger('click');
+        });
     }
 
     svg.selectAll('circle.to-remove').remove();
