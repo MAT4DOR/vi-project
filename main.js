@@ -345,11 +345,14 @@ function initHorizontalDivergentBar() {
 
     visualizations.task4 = {svg: svg};
 
+    var diffSelected = ['edu_diff', 'labour_diff'].indexOf(selectedAttr);
     var comparingFunction = function compareNumbers(a, b) {
-        if(selectedAttr == "labour_diff" || selectedAttr == "edu_diff")
-            return Math.abs(parseInt(a[selectedAttr])) - Math.abs(parseInt(b[selectedAttr]));
+        if(diffSelected >= 0)
+            return Math.abs(parseValue(a[selectedAttr],4)) - Math.abs(parseValue(b[selectedAttr],4));
+        else if (['gii_rank', 'gii_value', 'mmr', 'abr'].indexOf(selectedAttr) >= 0)
+            return parseValue(a[selectedAttr],4) - parseValue(b[selectedAttr],4) ;
         else
-            return parseInt(b[selectedAttr]) - parseInt(a[selectedAttr]);
+            return parseValue(b[selectedAttr],4) - parseValue(a[selectedAttr],4);
     };
 
     var orderedDataset = full_dataset.slice();
@@ -357,14 +360,23 @@ function initHorizontalDivergentBar() {
 
 //este shortenedDataset pode ser calculado no inicio para ambos os casos (edu e labour diff) e dps reutilziava esses
     var shortenedDataset = [];
-    shortenedDataset[0] = orderedDataset[0];
-    shortenedDataset[1] = orderedDataset[1];
-    shortenedDataset[2] = orderedDataset[2];
+
+    var startOfSmaller = orderedDataset.length-1;
+    for(var i = 0; i < orderedDataset.length; i++){
+        if((diffSelected<0 && orderedDataset[i][selectedAttr] != -1) || (diffSelected>=0 && orderedDataset[i][selectedAttr] != 0)){
+            startOfSmaller = i;
+            break;
+        }
+    }
+
+    shortenedDataset[0] = orderedDataset[startOfSmaller];
+    shortenedDataset[1] = orderedDataset[startOfSmaller+1];
+    shortenedDataset[2] = orderedDataset[startOfSmaller+2];
 
 
     var startOfSmaller = orderedDataset.length-1;
     for(var i = orderedDataset.length-1; i >= 0; i--){
-        if(orderedDataset[i][selectedAttr] != -1){
+        if((diffSelected<0 && orderedDataset[i][selectedAttr] != -1) || (diffSelected>=0  && orderedDataset[i][selectedAttr] != 0)){
             startOfSmaller = i;
             break;
         }
@@ -374,16 +386,20 @@ function initHorizontalDivergentBar() {
     shortenedDataset[4] = orderedDataset[startOfSmaller-1];
     shortenedDataset[5] = orderedDataset[startOfSmaller];
 
+    var x = d3.scale.linear()
+                .domain([shortenedDataset[5][selectedAttr], shortenedDataset[0][selectedAttr]])
+                .range([0, w]);
+
     svg.selectAll("rect")
         .data(shortenedDataset)
         .enter().append("rect")
         .attr("width",function(d) {
-                    return Math.abs(parseInt(d[selectedAttr]));
+                    return Math.abs(parseValue(d[selectedAttr], 4));
             })
         .attr("height",20)
         .attr("fill","purple")
         .attr("x",function(d) {
-            return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 : w/2+parseInt(d[selectedAttr]);
+            return Math.sign(parseValue(d[selectedAttr],4))==1 ? w/2 : w/2+parseValue(d[selectedAttr],4);
             })
         .attr("y",function(d, i) {
             return i>=3 ? i*(21 + 16) + 42 : i*(21 + 16);
@@ -393,29 +409,28 @@ function initHorizontalDivergentBar() {
             });
 
 
-             // Add text numbers in bar
+    // Add text numbers in bar
     svg.selectAll("text.t4Values")
         .data(shortenedDataset)
         .enter()
         .append("text")
         .attr("class", "t4Values")
         .attr("x", function(d) {  
-            return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 +parseInt(d[selectedAttr]) : w/2+parseInt(d[selectedAttr]) - 35;
+            return Math.sign(parseValue(d[selectedAttr]),4)==1 ? w/2 +parseValue(d[selectedAttr],4) : w/2+parseValue(d[selectedAttr],4) - 35;
          })
         .attr("y", function(d, i) {
             return i>=3 ? i*(21 + 16) + 42 + 14 : i*(21 + 16)+14;
             })
-        .text(function(d) { return parseValue(d[selectedAttr], 4); });
+        .text(function(d) { return parseValue(d[selectedAttr], 3); });
 
-                // Add text label in bar
-               
-        svg.selectAll("text.t4Names")
+    // Add text label in bar
+    svg.selectAll("text.t4Names")
         .data(shortenedDataset)
         .enter()
         .append("text")
         .attr("class", "t4Names")
         .attr("x", function(d) {  
-            return Math.sign(parseInt(d[selectedAttr]))==1 ? w/2 +parseInt(d[selectedAttr]) : w/2+parseInt(d[selectedAttr]) - 35;
+            return Math.sign(parseValue(d[selectedAttr]),4)==1 ? w/2 +parseValue(d[selectedAttr],4) : w/2+parseValue(d[selectedAttr],4) - 35;
          })
         .attr("y", function(d, i) {
             return i>=3 ? i*(21 + 16) + 42 + 14 + 16: i*(21 + 16)+14+ 16;
@@ -433,11 +448,13 @@ function updateHorizontalDivergentBar() {
 
     var svg = visualizations.task4.svg;
 
-   var comparingFunction = function compareNumbers(a, b) {
-         if(selectedAttr == "labour_diff" || selectedAttr == "edu_diff")
-            return Math.abs(parseInt(a[selectedAttr])) - Math.abs(parseInt(b[selectedAttr]));
+    var comparingFunction = function compareNumbers(a, b) {
+        if(selectedAttr == 'labour_diff' || selectedAttr == 'edu_diff')
+            return Math.abs(parseValue(a[selectedAttr],4)) - Math.abs(parseValue(b[selectedAttr],4));
+        else if (['gii_rank', 'gii_value', 'mmr', 'abr'].indexOf(selectedAttr) >= 0)
+            return parseValue(a[selectedAttr],4) - parseValue(b[selectedAttr],4) ;
         else
-            return parseInt(b[selectedAttr]) - parseInt(a[selectedAttr]);
+            return parseValue(b[selectedAttr],4) - parseValue(a[selectedAttr],4);
     };
 
 //este shortenedDataset pode ser calculado no inicio para ambos os casos (edu e labour diff) e dps reutilziava esses
@@ -446,9 +463,18 @@ function updateHorizontalDivergentBar() {
     orderedDataset = orderedDataset.sort(comparingFunction);
 
     var shortenedDataset = [];
-    shortenedDataset[0] = orderedDataset[0];
-    shortenedDataset[1] = orderedDataset[1];
-    shortenedDataset[2] = orderedDataset[2];
+
+    var startOfSmaller = orderedDataset.length-1;
+    for(var i = 0; i < orderedDataset.length; i++){
+        if(orderedDataset[i][selectedAttr] != -1){
+            startOfSmaller = i;
+            break;
+        }
+    }
+
+    shortenedDataset[0] = orderedDataset[startOfSmaller];
+    shortenedDataset[1] = orderedDataset[startOfSmaller+1];
+    shortenedDataset[2] = orderedDataset[startOfSmaller+2];
 
     var startOfSmaller = orderedDataset.length-1;
     for(var i = orderedDataset.length-1; i >= 0; i--){
@@ -462,11 +488,16 @@ function updateHorizontalDivergentBar() {
     shortenedDataset[4] = orderedDataset[startOfSmaller-1];
     shortenedDataset[5] = orderedDataset[startOfSmaller];
 
+    var x = d3.scale.linear()
+                .domain([shortenedDataset[5][selectedAttr], shortenedDataset[0][selectedAttr]])
+                .range([0, w]);
+
     svg.selectAll("rect")
         .data(shortenedDataset)
         .style("visibility", function(d) {
                 return "visible";
               })
+        .style("width", function(d) { return x(d) + "px"; })
         .transition()   
         .duration(1000) 
         .attr("width",function(d) {
@@ -497,7 +528,7 @@ function updateHorizontalDivergentBar() {
         .attr("y", function(d, i) {
             return i>=3 ? i*(21 + 16) + 42 + 14 : i*(21 + 16)+14;
             })
-        .text(function(d) {return d[selectedAttr]; });
+        .text(function(d) { return parseValue(d[selectedAttr], 3); });
 
                 // Add text label in bar
              
@@ -516,21 +547,6 @@ function updateHorizontalDivergentBar() {
             })
         .text(function(d) { return d.country; });
 }
-
-function hideHorizontalDivergentBar() {
-    var svg = visualizations.task4.svg;
-
-    svg.selectAll("rect")
-              .style("visibility", function(d) {
-                return "hidden";
-              })
-
-    svg.selectAll("text")
-              .style("visibility", function(d) {
-                return "hidden";
-              })
-}
-
 
 function hideHorizontalDivergentBar() {
 	var svg = visualizations.task4.svg;
