@@ -171,7 +171,16 @@ function initTask2() {
         axis.selectAll('line').remove();
         axis.selectAll('text').attr('x', 0).attr('style', 'text-anchor: middle');
 
-        enterSelection.append('circle').attr('class', 'to-remove').filter(function (d) { return d[attr] != -1; })
+        enterSelection.append('circle').attr('class', 'to-remove').filter(function (d) {
+                if (d[attr] == '-1')
+                    return false;
+                if (attr.endsWith('_diff')) {
+                    var attrParent = attr.substr(0, attr.indexOf('_diff'));
+                    if (d[attrParent + '_male'] == '-1' || d[attrParent + '_female'] == '-1')
+                        return false;
+                }
+                return true;
+            })
             .attr('fill', '#555')
             .attr('r', 5)
             .attr('cx', x0)
@@ -245,7 +254,7 @@ function updateTask2(countrySelectorNumber, selectedCountry) {
             return scaleY[attr](parseValue(d[attr], 4));
         };
         selection.select('circle[attr="' + attr + '"]').transition().duration(1000).attr('cy', centerY);
-        selection.select('circle[attr="' + attr + '"] title').text(function(d) { return d['rank_' + attr] + '/' + attributes[attrIndex].maxRank; });
+        selection.select('circle[attr="' + attr + '"] title').text(function(d) { return 'Rank: ' + d['rank_' + attr] + '/' + attributes[attrIndex].maxRank; });
         selection.select('text[attr="' + attr + '"]').text(function(d) { return parseValue(d[attr], attr == 'gii_value' ? 3 : 1); }).transition().duration(1000).attr('y',  centerY);
         var y = function (d, i) {
             if (d[attr] == '-1')
@@ -617,7 +626,7 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
        .duration(1000)
       .attr("height", Math.abs(attrValue*valuesScale))
       .attr("y", Math.min(centerY, centerY - attrValue*valuesScale));
-    bar.select('title').text(selectedRow['rank_' + selectedAttr] + '/' + findAttributeByCol(selectedAttr).maxRank);
+    bar.select('title').text('Rank: ' + selectedRow['rank_' + selectedAttr] + '/' + findAttributeByCol(selectedAttr).maxRank);
 
     var label = svg.select("#task1label"+countrySelectorNumber);
     label.text(attrValue)
