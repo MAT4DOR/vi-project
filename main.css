@@ -32,9 +32,10 @@ h1 {
     text-align: center;
 }
 
-#attribute-selection, #charts {
-    display: inline-block;
-    vertical-align: top;
+#attribute-selection {
+    position: fixed;
+    top: 10px;
+    left: 10px;
 }
 
 svg line, .axis path {
@@ -52,15 +53,37 @@ svg text {
     display: none;
 }
 
-section {
-    width: 100%
-    margin: auto;
-    padding: 10px;
+
+#charts {
+    position: absolute;
+    top: 80px;
+    left: 200px;
 }
-div#task2 {
-    width: 100%;
-    float: left;
+
+#charts > * {
+    position: absolute;
+    left: 0px;
+    top: 0px;
 }
+
 div#task1 {
-    margin-left: 110%;
+    transform: translateX(700px);
+}
+
+div#task2 {
+}
+
+div#task4 {
+    transform: translate(700px, 220px);
+}
+
+div#task5 {
+    position: absolute;
+    top: 400px;
+    left: 0px;
+}
+
+.line {
+    fill: none;
+    stroke-width: 1.5px;
 }

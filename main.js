@@ -4,7 +4,7 @@ var countryColors = ['#f50', '#0f5'];
 var attributeColors = ['#7bf', '#fd4'];
 var attributes = [
     {col: 'gii_value', shortname:'GII Value', max:1},
-    {col: 'gii_rank', shortname:'GII Rank', max:1},
+    {col: 'gii_rank', shortname:'GII Rank', max:-1},
     {col: 'mmr', shortname:'Maternal Mortality', max:-1},
     {col: 'abr', shortname:'Adolencent Births', max:-1},
     {col: 'ssp', shortname:'Seats Parliament', max:100},
@@ -104,15 +104,17 @@ function initializeInterface() {
 
 function initializeVisualizations() {
     initTask2();
+    initTask5();
 }
 
 function initTask2() {
     var options = {
-        width: 800,
+        width: 700,
         height: 400,
         paddingTop: 30,
         padding: 60,
-        paddingH: 40,
+        paddingLeft: 40,
+        paddingRight: 10,
         notInteresting: ['gii_rank', 'human-development']
     }
     var svg = d3.select('#task2').append('svg');
@@ -120,7 +122,7 @@ function initTask2() {
 
     var enterSelection = svg.selectAll('circle').data(full_dataset).enter();
 
-    var scaleX = d3.scale.ordinal().rangeRoundBands([options.paddingH, options.width - options.paddingH]);
+    var scaleX = d3.scale.ordinal().rangeRoundBands([options.paddingLeft, options.width - options.paddingRight]);
     scaleX.domain(attributes.map(function(d) {
         if (options.notInteresting.indexOf(d.col) != -1)
             return undefined;
@@ -135,7 +137,7 @@ function initTask2() {
             .attr('height', options.height-4)
             .attr('fill', attributeColors[attrNum])
             .attr('opacity', 0.80)
-            .attr('attr-num', (attrNum+1));
+            .attr('attr-num', attrNum);
     }
 
     var xAxis = d3.svg.axis().scale(scaleX).orient('bottom');
@@ -348,8 +350,8 @@ function wrap(text, width) {
 }
 
 function initHorizontalDivergentBar() {
-    var margin = {top: 20, right: 20, bottom: 30, left: 200};
-    var w = 960 - margin.left - margin.right;
+    var margin = {top: 20, right: 20, bottom: 30, left: 20};
+    var w = 400 - margin.left - margin.right;
     var h = 500 - margin.top - margin.bottom;
 
     var selectedAttr = $('.selected').attr("data-id");
@@ -386,8 +388,8 @@ function initHorizontalDivergentBar() {
 }
 
 function updateHorizontalDivergentBar() {
-    var margin = {top: 20, right: 20, bottom: 30, left: 200};
-    var w = 960 - margin.left - margin.right;
+    var margin = {top: 20, right: 20, bottom: 30, left: 20};
+    var w = 400 - margin.left - margin.right;
     var h = 500 - margin.top - margin.bottom;
 
     var selectedAttr = $('.selected').attr("data-id");
@@ -638,6 +640,41 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     line.attr('y1', centerY).attr('y2', centerY);
 }
 
+function initTask5() {
+    var options = {
+        width: 700,
+        height: 200,
+        paddingLeft: 20,
+        paddingTop: 20,
+        paddingBottom: 20,
+        paddingRight: 20
+    }
+
+    var svg = d3.select('#task5').append('svg');
+    svg.attr('width', options.width).attr('height', options.height);
+
+    for(var i = 0; i < attributeColors.length; ++i)
+        svg.append("path").attr('id', 'task5_a' + i).attr("stroke", attributeColors[i]).attr("class", "line").attr('opacity', 0.8);
+
+    visualizations.task5 = {svg: svg, options: options};
+}
+
+function updateAttributeTask5(attributeNum, selectedAttribute) {
+    var options = visualizations.task5.options;
+
+    var attribute = findAttributeByCol(selectedAttribute);
+
+    var x = d3.scale.linear().domain([1, full_dataset.length]).range([options.paddingLeft, options.width-options.paddingRight]);
+    var y = d3.scale.linear().domain([selectedAttribute.endsWith('_diff') ? -1 : 0, 1]).range([options.height-options.paddingBottom, options.paddingTop]);
+
+    var line = d3.svg.line()
+        .x(function(d, i) { return x(i+1); })
+        .y(function(d) { return y(parseValue(d[selectedAttribute], 4) / attribute.max); })
+        .defined(function(d) { return d[selectedAttribute] != -1; });
+
+    visualizations.task5.svg.select('#task5_a' + attributeNum).datum(full_dataset).transition().duration(1000).attr("d", line);
+}
+
 function initialize() {
     initializeData();
     initializeInterface();
@@ -649,9 +686,14 @@ $('#attribute-selection li').click(function() {
     self.parent().children('.selected').removeClass('selected');
     self.addClass('selected');
 
-    updateAttributeTask2(self.parent().attr('data-id'), self.attr('data-id'));
+    updateAttribute(self.parent().attr('data-id') - 1, self.attr('data-id'));
     changeVisualizations();
 });
+
+function updateAttribute(attributeNum, selectedAttribute) {
+    updateAttributeTask2(attributeNum, selectedAttribute);
+    updateAttributeTask5(attributeNum, selectedAttribute);
+}
 
 function getSelectedText(elementId) {
     var elt = document.getElementById(elementId);
