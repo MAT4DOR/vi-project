@@ -719,10 +719,43 @@ function initTask5() {
             });
         });
 
+
+    svg.append('text')
+        .attr('x', 75)
+        .attr('y', 18)
+        .attr('text-anchor', 'middle')
+        .attr('data-mid', 0)
+        .text('linear');
+
+    var methods = [
+        'linear',
+        'basis',
+        'bundle',
+        'cardinal',
+        'monotone'
+    ];
+
+    svg.append('rect')
+        .attr('x', 50)
+        .attr('y', 8)
+        .attr('width', 50)
+        .attr('height', 14)
+        .attr('opacity', 0.1)
+        .on('click', function() {
+            var textEl = svg.select('text');
+            var newId = (parseInt(textEl.attr('data-mid')) + 1) % methods.length;
+            textEl.attr('data-mid', newId).text(methods[newId]);
+            for (var i = 0; i < attributeColors.length; ++i) {
+                var attr = $('#attribute-selection-' + (i + 1) + ' li.selected').attr('data-id');
+                if (attr != undefined)
+                    updateAttributeTask5(i, attr, true);
+            }
+        });
+
     visualizations.task5 = {svg: svg, options: options};
 }
 
-function updateAttributeTask5(attributeNum, selectedAttribute) {
+function updateAttributeTask5(attributeNum, selectedAttribute, dontTransition) {
     var options = visualizations.task5.options;
     var svg = visualizations.task5.svg;
 
@@ -732,15 +765,20 @@ function updateAttributeTask5(attributeNum, selectedAttribute) {
     var y = d3.scale.linear().domain([selectedAttribute.endsWith('_diff') ? -1 : 0, 1]).range([options.height-options.paddingBottom, options.paddingTop]);
 
     var line = d3.svg.line()
+        .interpolate(svg.select('text').text())
         .x(function(d, i) { return x(i+1); })
         .y(function(d) { return y(parseValue(d[selectedAttribute], 4) / attribute.max); })
         .defined(function(d) { return !isMissingValue(d, selectedAttribute); });
 
-    svg.selectAll('#task5_g' + attributeNum + ' circle')
-        .data(full_dataset).transition().duration(1000)
-        .attr('cy', function(d) { return isMissingValue(d, selectedAttribute) ? options.height + 5 : y(parseValue(d[selectedAttribute], 4) / attribute.max); });
+    var circles = svg.selectAll('#task5_g' + attributeNum + ' circle').data(full_dataset);
+    var path =  svg.select('#task5_a' + attributeNum).datum(full_dataset.slice(0, full_dataset.length-8));
+    if (dontTransition != true) {
+        circles = circles.transition().duration(1000);
+        path = path.transition().duration(1000);
+    }
 
-    svg.select('#task5_a' + attributeNum).datum(full_dataset.slice(0, full_dataset.length-8)).transition().duration(1000).attr('d', line);
+    circles.attr('cy', function(d) { return isMissingValue(d, selectedAttribute) ? options.height + 5 : y(parseValue(d[selectedAttribute], 4) / attribute.max); });
+    path.attr('d', line);
 }
 
 function isMissingValue(d, attr) {
