@@ -643,24 +643,88 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
 function initTask5() {
     var options = {
         width: 700,
-        height: 200,
-        paddingLeft: 20,
-        paddingTop: 20,
-        paddingBottom: 20,
-        paddingRight: 20
+        height: 220,
+        paddingLeft: 10,
+        paddingTop: 40,
+        paddingBottom: 5,
+        paddingRight: 10
     }
 
     var svg = d3.select('#task5').append('svg');
     svg.attr('width', options.width).attr('height', options.height);
 
-    for(var i = 0; i < attributeColors.length; ++i)
-        svg.append("path").attr('id', 'task5_a' + i).attr("stroke", attributeColors[i]).attr("class", "line").attr('opacity', 0.8);
+    var x = d3.scale.linear().domain([1, full_dataset.length]).range([options.paddingLeft, options.width-options.paddingRight]);
+
+    for(var i = 0; i < attributeColors.length; ++i) {
+        svg.append('path').attr('id', 'task5_a' + i).attr('stroke', attributeColors[i]).attr('class', 'line').attr('opacity', 0.8);
+        svg.append('g').attr('id', 'task5_g' + i)
+            .selectAll('circle')
+            .data(full_dataset)
+            .enter()
+            .append('circle')
+            .attr('fill', attributeColors[i])
+            .attr('r', 1.5)
+            .attr('cx', function(d, index) { return x(index + 1); })
+            .attr('cy', options.height + 5);
+    }
+    var x1 = x(full_dataset.length - 8)+1.5;
+    svg.append('line')
+        .attr('x1', x1)
+        .attr('x2', x1)
+        .attr('y1', options.height-options.paddingBottom)
+        .attr('y2', options.paddingTop)
+        .attr('stroke-dasharray', '10, 10');
+
+    svg.append('line')
+        .attr('x1', options.paddingLeft)
+        .attr('x2', options.width-options.paddingRight)
+        .attr('y1', options.height-options.paddingBottom)
+        .attr('y2', options.height-options.paddingBottom);
+
+    var sparkLen = 5;
+    var sparkX = d3.scale.linear().domain([0, sparkLen-1]).range([10, 40]);
+    var sparkY = d3.scale.linear().domain([1, 20]).range([10, 20]);
+    var vals = [1,15,5,12,6];
+    var line = d3.svg.line()
+        .x(function(d, i) { return sparkX(i); })
+        .y(function(d) { return sparkY(d); });
+    svg.append('path')
+        .datum(vals)
+        .attr("stroke", '#f00')
+        .attr('class', 'line')
+        .attr('d', line);
+
+    svg.append('g')
+        .selectAll('circle')
+        .data(vals)
+        .enter()
+        .append('circle')
+        .attr('fill', '#f00')
+        .attr('r', 1.5)
+        .attr('cx', function(d, i) { return sparkX(i); })
+        .attr('cy', function(d) { return sparkY(d); });
+
+    svg.append('rect')
+        .attr('x', 8)
+        .attr('y', 8)
+        .attr('width', 34)
+        .attr('height', 14)
+        .attr('opacity', 0.1)
+        .on('click', function() {
+            var parent = $(this).parent();
+            parent.children('path').attr('class', function(index, classNames) {
+                if (classNames.indexOf('hide') != -1)
+                    return classNames.replace('hide', '');
+                return classNames + ' hide';
+            });
+        });
 
     visualizations.task5 = {svg: svg, options: options};
 }
 
 function updateAttributeTask5(attributeNum, selectedAttribute) {
     var options = visualizations.task5.options;
+    var svg = visualizations.task5.svg;
 
     var attribute = findAttributeByCol(selectedAttribute);
 
@@ -670,9 +734,24 @@ function updateAttributeTask5(attributeNum, selectedAttribute) {
     var line = d3.svg.line()
         .x(function(d, i) { return x(i+1); })
         .y(function(d) { return y(parseValue(d[selectedAttribute], 4) / attribute.max); })
-        .defined(function(d) { return d[selectedAttribute] != -1; });
+        .defined(function(d) { return !isMissingValue(d, selectedAttribute); });
 
-    visualizations.task5.svg.select('#task5_a' + attributeNum).datum(full_dataset).transition().duration(1000).attr("d", line);
+    svg.selectAll('#task5_g' + attributeNum + ' circle')
+        .data(full_dataset).transition().duration(1000)
+        .attr('cy', function(d) { return isMissingValue(d, selectedAttribute) ? options.height + 5 : y(parseValue(d[selectedAttribute], 4) / attribute.max); });
+
+    svg.select('#task5_a' + attributeNum).datum(full_dataset.slice(0, full_dataset.length-8)).transition().duration(1000).attr('d', line);
+}
+
+function isMissingValue(d, attr) {
+    if (d[attr] == '-1')
+        return true;
+    if (attr.endsWith('_diff')) {
+        var attrParent = attr.substr(0, attr.indexOf('_diff'));
+        if (d[attrParent + '_male'] == '-1' || d[attrParent + '_female'] == '-1')
+            return true;
+    }
+    return false;
 }
 
 function initialize() {

@@ -87,3 +87,7 @@ div#task5 {
     fill: none;
     stroke-width: 1.5px;
 }
+
+.hide {
+    display: none;
+}
