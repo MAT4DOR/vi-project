@@ -110,7 +110,7 @@ function initializeVisualizations() {
 function initTask2() {
     var options = {
         width: 700,
-        height: 400,
+        height: 300,
         paddingTop: 30,
         padding: 60,
         paddingLeft: 40,
@@ -352,7 +352,7 @@ function wrap(text, width) {
 function initHorizontalDivergentBar() {
     var margin = {top: 20, right: 20, bottom: 30, left: 20};
     var w = 400 - margin.left - margin.right;
-    var h = 500 - margin.top - margin.bottom;
+    var h = 350 - margin.top - margin.bottom;
 
     var selectedAttr = $('.selected').attr("data-id");
 
@@ -390,7 +390,7 @@ function initHorizontalDivergentBar() {
 function updateHorizontalDivergentBar() {
     var margin = {top: 20, right: 20, bottom: 30, left: 20};
     var w = 400 - margin.left - margin.right;
-    var h = 500 - margin.top - margin.bottom;
+    var h = 350 - margin.top - margin.bottom;
 
     var selectedAttr = $('.selected').attr("data-id");
 
