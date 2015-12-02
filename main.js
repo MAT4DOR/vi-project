@@ -25,6 +25,15 @@ dsv('gender_inequality.csv', function (data) {
 var task1Initialized = false;
 var task4Initialized = false;
 
+var map = new Datamap({
+    element: document.getElementById('container'),
+    done: function(datamap) {
+        datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
+            alert(geography.properties.name);
+        });
+    }
+});
+
 function initializeData() {
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
         var attr = attributes[attrIndex].col;
