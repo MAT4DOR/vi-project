@@ -108,3 +108,7 @@ div#task5 {
     height: 300px;
     left: 250px;
 }
+
+.svg-button rect {
+    cursor: pointer;
+}

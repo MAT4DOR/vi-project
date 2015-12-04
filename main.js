@@ -675,7 +675,7 @@ function initTask5() {
     var x = d3.scale.linear().domain([1, full_dataset.length]).range([options.paddingLeft, options.width-options.paddingRight]);
 
     for(var i = 0; i < attributeColors.length; ++i) {
-        svg.append('path').attr('id', 'task5_a' + i).attr('stroke', attributeColors[i]).attr('class', 'line').attr('opacity', 0.8);
+        svg.append('path').attr('id', 'task5_a' + i).attr('stroke', attributeColors[i]).attr('class', 'line chart').attr('opacity', 0.8);
         svg.append('g').attr('id', 'task5_g' + i)
             .selectAll('circle')
             .data(full_dataset)
@@ -700,6 +700,7 @@ function initTask5() {
         .attr('y1', options.height-options.paddingBottom)
         .attr('y2', options.height-options.paddingBottom);
 
+    var controlsGroup = svg.append('g').attr('class', 'svg-button');
     var sparkLen = 5;
     var sparkX = d3.scale.linear().domain([0, sparkLen-1]).range([10, 40]);
     var sparkY = d3.scale.linear().domain([1, 20]).range([10, 20]);
@@ -707,13 +708,13 @@ function initTask5() {
     var line = d3.svg.line()
         .x(function(d, i) { return sparkX(i); })
         .y(function(d) { return sparkY(d); });
-    svg.append('path')
+    controlsGroup.append('path')
         .datum(vals)
         .attr("stroke", '#f00')
         .attr('class', 'line')
         .attr('d', line);
 
-    svg.append('g')
+    controlsGroup.append('g')
         .selectAll('circle')
         .data(vals)
         .enter()
@@ -722,30 +723,49 @@ function initTask5() {
         .attr('r', 1.5)
         .attr('cx', function(d, i) { return sparkX(i); })
         .attr('cy', function(d) { return sparkY(d); });
-
-    svg.append('rect')
+        
+    controlsGroup.append('g')
+        .selectAll('circle')
+        .data(vals)
+        .enter()
+        .append('circle')
+        .attr('fill', '#f00')
+        .attr('r', 1.5)
+        .attr('cx', function(d, i) { return sparkX(i) + 35; })
+        .attr('cy', function(d) { return sparkY(d); });
+        
+    controlsGroup.append('rect')
         .attr('x', 8)
+        .attr('y', 8)
+        .attr('width', 34)
+        .attr('height', 14)
+        .attr('opacity', 0.3)
+        .on('click', function() {
+            controlsGroup.selectAll('rect').attr('opacity', 0.1);
+            $(this).attr('opacity', 0.3);
+            $(this).parent().parent().children('path.chart').attr('class', function(index, classNames) {
+                if (classNames.indexOf('hide') != -1)
+                    return classNames.replace('hide', '');
+                return classNames;
+            });
+        });
+        
+    controlsGroup.append('rect')
+        .attr('x', 8+35)
         .attr('y', 8)
         .attr('width', 34)
         .attr('height', 14)
         .attr('opacity', 0.1)
         .on('click', function() {
-            var parent = $(this).parent();
-            parent.children('path').attr('class', function(index, classNames) {
+            controlsGroup.selectAll('rect').attr('opacity', 0.1);
+            $(this).attr('opacity', 0.3);
+            $(this).parent().parent().children('path.chart').attr('class', function(index, classNames) {
                 if (classNames.indexOf('hide') != -1)
-                    return classNames.replace('hide', '');
+                    return classNames;
                 return classNames + ' hide';
             });
         });
-
-
-    svg.append('text')
-        .attr('x', 75)
-        .attr('y', 18)
-        .attr('text-anchor', 'middle')
-        .attr('data-mid', 0)
-        .text('linear');
-
+    
     var methods = [
         'linear',
         'basis',
@@ -754,22 +774,39 @@ function initTask5() {
         'monotone'
     ];
 
-    svg.append('rect')
-        .attr('x', 50)
-        .attr('y', 8)
-        .attr('width', 50)
-        .attr('height', 14)
-        .attr('opacity', 0.1)
-        .on('click', function() {
-            var textEl = svg.select('text');
-            var newId = (parseInt(textEl.attr('data-mid')) + 1) % methods.length;
-            textEl.attr('data-mid', newId).text(methods[newId]);
-            for (var i = 0; i < attributeColors.length; ++i) {
-                var attr = $('#attribute-selection-' + (i + 1) + ' li.selected').attr('data-id');
-                if (attr != undefined)
-                    updateAttributeTask5(i, attr, true);
-            }
-        });
+    var startX = 100;
+    var group = svg.append('g').attr('class', 'svg-button interpolate-method');
+    for (var i = 0; i < methods.length; ++i) {
+      group.append('text')
+          .attr('x', 51 * i + 25 + startX)
+          .attr('y', 18)
+          .attr('text-anchor', 'middle')
+          .attr('class', i == 0 ? 'selected' : '')
+          .attr('data-mid', i)
+          .text(methods[i]);
+      group.append('rect')
+          .attr('x', 51 * i + startX)
+          .attr('y', 8)
+          .attr('width', 50)
+          .attr('height', 14)
+          .attr('class', i == 0 ? 'selected' : '')
+          .attr('opacity', i == 0 ? 0.3 : 0.1)
+          .attr('data-mid', i)
+          .on('click', function() {
+              // deselect all
+              group.selectAll('rect').attr('opacity', 0.1).attr('class', '');
+              group.selectAll('text').attr('class', '');
+              // select the correct one
+              group.select('text[data-mid="' + $(this).attr('data-mid') + '"]').attr('class', 'selected');
+              $(this).attr('opacity', 0.3).attr('class', 'selected');
+              
+              for (var i = 0; i < attributeColors.length; ++i) {
+                  var attr = $('#attribute-selection-' + (i + 1) + ' li.selected').attr('data-id');
+                  if (attr != undefined)
+                      updateAttributeTask5(i, attr, true);
+              }
+          });
+    }
 
     visualizations.task5 = {svg: svg, options: options};
 }
@@ -784,7 +821,7 @@ function updateAttributeTask5(attributeNum, selectedAttribute, dontTransition) {
     var y = d3.scale.linear().domain([selectedAttribute.endsWith('_diff') ? -1 : 0, 1]).range([options.height-options.paddingBottom, options.paddingTop]);
 
     var line = d3.svg.line()
-        .interpolate(svg.select('text').text())
+        .interpolate(svg.select('.interpolate-method text.selected').text())
         .x(function(d, i) { return x(i+1); })
         .y(function(d) { return y(parseValue(d[selectedAttribute], 4) / attribute.max); })
         .defined(function(d) { return !isMissingValue(d, selectedAttribute); });
