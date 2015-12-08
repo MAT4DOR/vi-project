@@ -16,29 +16,65 @@ var attributes = [
     {col: 'labour_diff', shortname:'Labour Difference', max:100},
 ];
 var availableMapCountries = ["Norway","Australia","Switzerland","Netherlands","United States of America","Germany","New Zealand","Canada","Singapore","Denmark","Ireland","Sweden","Iceland","United Kingdom","Hong Kong, China (SAR)","North Korea","Japan","Liechtenstein","Israel","France","Austria","Belgium","Luxembourg","Finland","Slovenia","Italy","Spain","Czech Republic","Greece","Brunei","Qatar","Cyprus","Estonia","Saudi Arabia","Lithuania","Poland","Andorra","Slovakia","Malta","United Arab Emirates","Chile","Portugal","Hungary","Bahrain","Cuba","Kuwait","Croatia","Latvia","Argentina","Uruguay","The Bahamas","Montenegro","Belarus","Romania","Libya","Oman","Russia","Bulgaria","Barbados","Palau","Antigua and Barbuda","Malaysia","Mauritius","Trinidad and Tobago","Lebanon","Panama","Venezuela","Costa Rica","Turkey","Kazakhstan","Mexico","Seychelles","Saint Kitts and Nevis","Sri Lanka","Iran","Azerbaijan","Jordan","Republic of Serbia","Brazil","Georgia","Grenada","Peru","Ukraine","Belize","The former Yugoslav Republic of Macedonia","Bosnia and Herzegovina","Armenia","Fiji","Thailand","Tunisia","China","Saint Vincent and the Grenadines","Algeria","Dominica","Albania","Jamaica","Saint Lucia","Colombia","Ecuador","Suriname","Tonga","Dominican Republic","Maldives","Mongolia","Turkmenistan","Samoa","Palestine, State of","Indonesia","Botswana","Egypt","Paraguay","Gabon","Bolivia (Plurinational State of)","Moldova","El Salvador","Uzbekistan","Philippines","South Africa","Syria","Iraq","Guyana","Vietnam","Cape Verde","Micronesia (Federated States of)","Guatemala","Kyrgyzstan","Namibia","East Timor","Honduras","Morocco","Vanuatu","Nicaragua","Kiribati","Tajikistan","India","Bhutan","Cambodia","Ghana","Laos","Republic of the Congo","Zambia","Bangladesh","Sao Tome and Principe","Equatorial Guinea","Nepal","Pakistan","Kenya","Swaziland","Angola","Myanmar","Rwanda","Cameroon","Nigeria","Yemen","Madagascar","Zimbabwe","Papua New Guinea","Solomon Islands","Comoros","United Republic of Tanzania","Mauritania","Lesotho","Senegal","Uganda","Benin","Sudan","Togo","Haiti","Afghanistan","Djibouti","Côte d'Ivoire","Gambia","Ethiopia","Malawi","Liberia","Mali","Guinea Bissau","Mozambique","Guinea","Burundi","Burkina Faso","Eritrea","Sierra Leone","Chad","Central African Republic","Democratic Republic of the Congo","Niger","South Korea","Marshall Islands","Monaco","Nauru","San Marino","Somalia","South Sudan","Tuvalu"];
+var lastSelectedMapCountry = "AFG";
 
 var dsv = d3.dsv(';', 'text/plain');
 dsv('gender_inequality.csv', function (data) {
     full_dataset = data;
     initialize();
     var map = new Datamap({
-    element: document.getElementById('container'),
-    done: function(datamap) {
-        datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
-            var countryName = geography.properties.name;
-            if(availableMapCountries.indexOf(countryName) != -1){
-                for(i = 0; i < full_dataset.length; ++i){
-                    if(full_dataset[i]["country"] == countryName){
-                        $("#country-selection-0").val(i);
-                        changeSelectedCountry(0, i);
-                        break;
+         element: document.getElementById('container'),
+        geographyConfig: {
+            popupOnHover: true,
+            highlightOnHover: false,
+            popupTemplate: function(geo, data) {
+                if(availableMapCountries.indexOf(geo.properties.name) == -1){
+                    return ['<div class="hoverinfo" style="color: red"><strong>',
+                        geo.properties.name + ": ",
+                        'Unavaible data',
+                        '</strong></div>'].join('');
+                }else{
+                     return ['<div class="hoverinfo"><strong>',
+                        geo.properties.name,
+                        '</strong></div>'].join('');
+                }
+               
+            }
+        },
+        element: document.getElementById('container'),
+        done: function(datamap) {
+            datamap.svg.selectAll('.datamaps-subunit').each(function(geography){
+                if(availableMapCountries.indexOf(geography.properties.name) == -1){
+                    $(this).css("fill","rgb(50,50,50)");
+                }
+            });
+            datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
+                var countryName = geography.properties.name;
+                if(availableMapCountries.indexOf(countryName) != -1){
+                    for(i = 0; i < full_dataset.length; ++i){
+                        if(full_dataset[i]["country"] == countryName){
+                            $("#country-selection-0").val(i);
+                            changeSelectedCountry(0, i);
+                            $(this).css("fill","rgb(0,200,60)");  
+                            break;
+                        }
                     }
                 }
-                
-            }   
-        });
-    }
-});
+            });
+            datamap.svg.selectAll('.datamaps-subunit').on('mouseenter', function(geography) {
+                var countryName = geography.properties.name;
+                if(availableMapCountries.indexOf(countryName) != -1){
+                    $(this).css("fill","rgb(255,150,0)");       
+                }   
+            });
+            datamap.svg.selectAll('.datamaps-subunit').on('mouseleave', function(geography) {
+                var countryName = geography.properties.name;
+                if(availableMapCountries.indexOf(countryName) != -1){
+                    $(this).css("fill","#ABDDA4");       
+                }   
+            });
+        }
+    });
 });
 
 var task1Initialized = false;
