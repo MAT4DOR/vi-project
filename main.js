@@ -17,6 +17,16 @@ var attributes = [
 ];
 var availableMapCountries = ["Norway","Australia","Switzerland","Netherlands","United States of America","Germany","New Zealand","Canada","Singapore","Denmark","Ireland","Sweden","Iceland","United Kingdom","Hong Kong, China (SAR)","North Korea","Japan","Liechtenstein","Israel","France","Austria","Belgium","Luxembourg","Finland","Slovenia","Italy","Spain","Czech Republic","Greece","Brunei","Qatar","Cyprus","Estonia","Saudi Arabia","Lithuania","Poland","Andorra","Slovakia","Malta","United Arab Emirates","Chile","Portugal","Hungary","Bahrain","Cuba","Kuwait","Croatia","Latvia","Argentina","Uruguay","The Bahamas","Montenegro","Belarus","Romania","Libya","Oman","Russia","Bulgaria","Barbados","Palau","Antigua and Barbuda","Malaysia","Mauritius","Trinidad and Tobago","Lebanon","Panama","Venezuela","Costa Rica","Turkey","Kazakhstan","Mexico","Seychelles","Saint Kitts and Nevis","Sri Lanka","Iran","Azerbaijan","Jordan","Republic of Serbia","Brazil","Georgia","Grenada","Peru","Ukraine","Belize","The former Yugoslav Republic of Macedonia","Bosnia and Herzegovina","Armenia","Fiji","Thailand","Tunisia","China","Saint Vincent and the Grenadines","Algeria","Dominica","Albania","Jamaica","Saint Lucia","Colombia","Ecuador","Suriname","Tonga","Dominican Republic","Maldives","Mongolia","Turkmenistan","Samoa","Palestine, State of","Indonesia","Botswana","Egypt","Paraguay","Gabon","Bolivia (Plurinational State of)","Moldova","El Salvador","Uzbekistan","Philippines","South Africa","Syria","Iraq","Guyana","Vietnam","Cape Verde","Micronesia (Federated States of)","Guatemala","Kyrgyzstan","Namibia","East Timor","Honduras","Morocco","Vanuatu","Nicaragua","Kiribati","Tajikistan","India","Bhutan","Cambodia","Ghana","Laos","Republic of the Congo","Zambia","Bangladesh","Sao Tome and Principe","Equatorial Guinea","Nepal","Pakistan","Kenya","Swaziland","Angola","Myanmar","Rwanda","Cameroon","Nigeria","Yemen","Madagascar","Zimbabwe","Papua New Guinea","Solomon Islands","Comoros","United Republic of Tanzania","Mauritania","Lesotho","Senegal","Uganda","Benin","Sudan","Togo","Haiti","Afghanistan","Djibouti","Côte d'Ivoire","Gambia","Ethiopia","Malawi","Liberia","Mali","Guinea Bissau","Mozambique","Guinea","Burundi","Burkina Faso","Eritrea","Sierra Leone","Chad","Central African Republic","Democratic Republic of the Congo","Niger","South Korea","Marshall Islands","Monaco","Nauru","San Marino","Somalia","South Sudan","Tuvalu"];
 var lastSelectedMapCountry = "AFG";
+var selectionIndex = 0;
+var selectedCountries = ["Afghanistan", "Afghanistan"];
+var selectedCountriesId = ["AFG","AFG"];
+var countryIdMap = [];
+
+var mapBackgroundColor = "#8DCDE3";
+var country0Color = "#FF5500";
+var country1Color = "#00FF55";
+var mapHoverColor = "rgb(255,150,0)";
+var mapUnavailableColor = "rgb(50,50,50)";
 
 var dsv = d3.dsv(';', 'text/plain');
 dsv('gender_inequality.csv', function (data) {
@@ -43,39 +53,70 @@ dsv('gender_inequality.csv', function (data) {
         },
         element: document.getElementById('container'),
         done: function(datamap) {
+            var counter = 0;
             datamap.svg.selectAll('.datamaps-subunit').each(function(geography){
                 if(availableMapCountries.indexOf(geography.properties.name) == -1){
-                    $(this).css("fill","rgb(50,50,50)");
+                    $(this).css("fill",mapUnavailableColor);
+                }else{
+                    $(this).css("fill",mapBackgroundColor);
+                    countryIdMap[counter++] = [geography.properties.name, geography.id];
                 }
             });
+            console.log(countryIdMap);
             datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
-                var countryName = geography.properties.name;
-                if(availableMapCountries.indexOf(countryName) != -1){
-                    for(i = 0; i < full_dataset.length; ++i){
-                        if(full_dataset[i]["country"] == countryName){
-                            $("#country-selection-0").val(i);
-                            changeSelectedCountry(0, i);
-                            $(this).css("fill","rgb(0,200,60)");  
-                            break;
-                        }
+                for (var i = 0; i < full_dataset.length; ++i) {
+                    if(full_dataset[i]["country"] == geography.properties.name){
+                        $("#country-selection-"+selectionIndex).val(i);
+                        changeSelectedCountry(selectionIndex, i);
                     }
                 }
             });
             datamap.svg.selectAll('.datamaps-subunit').on('mouseenter', function(geography) {
                 var countryName = geography.properties.name;
                 if(availableMapCountries.indexOf(countryName) != -1){
-                    $(this).css("fill","rgb(255,150,0)");       
+                    if(selectedCountries.indexOf(countryName) == -1){
+                        $(this).css("fill",mapHoverColor);           
+                    }
                 }   
             });
             datamap.svg.selectAll('.datamaps-subunit').on('mouseleave', function(geography) {
                 var countryName = geography.properties.name;
                 if(availableMapCountries.indexOf(countryName) != -1){
-                    $(this).css("fill","#ABDDA4");       
+                    if(selectedCountries.indexOf(countryName) == -1){
+                        $(this).css("fill",mapBackgroundColor);       
+                    }
                 }   
             });
         }
     });
 });
+
+function changeSelectedCountryInMap(countryCount){
+    var countryName = full_dataset[countryCount]["country"];
+    var lastSelectedId = selectedCountriesId[selectionIndex];
+    $("path.datamaps-subunit."+lastSelectedId).css("fill",mapBackgroundColor);
+    if(availableMapCountries.indexOf(countryName) != -1){
+        var countryId = getCountryId(countryName);
+        if(countryId != "NULL"){
+            selectedCountries[selectionIndex] = countryName;
+            selectedCountriesId[selectionIndex] = countryId;
+            if(selectionIndex == 0){
+                $("path.datamaps-subunit."+countryId).css("fill",country0Color);
+            }
+            else{
+                $("path.datamaps-subunit."+countryId).css("fill",country1Color);  
+            }
+        }
+    }
+}
+
+function getCountryId(countryName){
+    for(i = 0; i < countryIdMap.length; ++i){
+        if(countryIdMap[i][0] == countryName)
+            return countryIdMap[i][1];
+    }
+    return "NULL";
+}
 
 var task1Initialized = false;
 var task4Initialized = false;
@@ -350,6 +391,7 @@ function updateAttributeTask2(attributeNum, selectedAttribute) {
 }
 
 function changeSelectedCountry(countrySelectorNumber, selectedCountry) {
+    changeSelectedCountryInMap(selectedCountry);
     updateTask2(countrySelectorNumber, selectedCountry);
     updateTask1(countrySelectorNumber, selectedCountry);
 }
@@ -605,14 +647,14 @@ function initTask1(){
       .attr("id", "barCountry0")
       .attr("x", 0)
       .attr("width", 30)
-      .attr("fill","#FF5500").append('title').text('');
+      .attr("fill",country0Color).append('title').text('');
 
      svg.append("rect")
       .attr("class", "bar")
       .attr("id", "barCountry1")
       .attr("x", 40)
       .attr("width", 30)
-      .attr("fill","#00FF55").append('title').text('');
+      .attr("fill",country1Color).append('title').text('');
 
     svg.append("text")
         .attr("id","task1label0")
