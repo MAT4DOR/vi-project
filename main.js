@@ -2,18 +2,21 @@ var full_dataset;
 var visualizations = {};
 var countryColors = ['#f50', '#0f5'];
 var attributeColors = ['#7bf', '#fd4'];
+var visAttributeSelected = ['gii_value', 'gii_rank'];
+
 var attributes = [
-    {col: 'gii_value', shortname:'GII Value', max:1},
-    {col: 'gii_rank', shortname:'GII Rank', max:-1},
-    {col: 'mmr', shortname:'Maternal Mortality', max:-1},
-    {col: 'abr', shortname:'Adolencent Births', max:-1},
-    {col: 'ssp', shortname:'Seats Parliament', max:100},
-    {col: 'edu_female', shortname:'Education Female', max:100},
-    {col: 'edu_male', shortname:'Education Male', max:100},
-    {col: 'edu_diff', shortname:'Education Difference', max:100},
-    {col: 'labour_female', shortname:'Labour Female', max:100},
-    {col: 'labour_male', shortname:'Labour Male', max:100},
-    {col: 'labour_diff', shortname:'Labour Difference', max:100},
+    {col: 'gii_value', shortname:'GII Value', fullname: 'Gender Inequality Index Value', max:1},
+    {col: 'gii_rank', shortname:'GII Rank', fullname: 'Gender Inequality Index Rank', max:-1},
+    {col: 'mmr', shortname:'Maternal Mortality', fullname: 'Maternal Mortality Ratio', max:-1},
+    {col: 'abr', shortname:'Adolencent Births', fullname: 'Adolescent Birth Rate', max:-1},
+    {col: 'ssp', shortname:'Seats Parliament', fullname: 'Share of seats in national parliament', max:100},
+    {col: 'edu_female', shortname:'Education Female', fullname: 'Education Female', max:100},
+    {col: 'edu_male', shortname:'Education Male', fullname: 'Gender Education Male', max:100},
+    {col: 'edu_diff', shortname:'Education Difference', fullname: 'Difference Female-Male Education', max:100},
+    {col: 'labour_female', shortname:'Labour Female', fullname: 'Labour Rate Female', max:100},
+    {col: 'labour_male', shortname:'Labour Male', fullname: 'Labour Rate Male', max:100},
+    {col: 'labour_diff', shortname:'Labour Difference', fullname: 'Difference Female-Male Labour Rate', max:100},
+    {col: 'human-development', shortname:'Human Development', fullname: 'Human Development', max: undefined},
 ];
 var availableMapCountries = ["Norway","Australia","Switzerland","Netherlands","United States of America","Germany","New Zealand","Canada","Singapore","Denmark","Ireland","Sweden","Iceland","United Kingdom","Hong Kong, China (SAR)","North Korea","Japan","Liechtenstein","Israel","France","Austria","Belgium","Luxembourg","Finland","Slovenia","Italy","Spain","Czech Republic","Greece","Brunei","Qatar","Cyprus","Estonia","Saudi Arabia","Lithuania","Poland","Andorra","Slovakia","Malta","United Arab Emirates","Chile","Portugal","Hungary","Bahrain","Cuba","Kuwait","Croatia","Latvia","Argentina","Uruguay","The Bahamas","Montenegro","Belarus","Romania","Libya","Oman","Russia","Bulgaria","Barbados","Palau","Antigua and Barbuda","Malaysia","Mauritius","Trinidad and Tobago","Lebanon","Panama","Venezuela","Costa Rica","Turkey","Kazakhstan","Mexico","Seychelles","Saint Kitts and Nevis","Sri Lanka","Iran","Azerbaijan","Jordan","Republic of Serbia","Brazil","Georgia","Grenada","Peru","Ukraine","Belize","The former Yugoslav Republic of Macedonia","Bosnia and Herzegovina","Armenia","Fiji","Thailand","Tunisia","China","Saint Vincent and the Grenadines","Algeria","Dominica","Albania","Jamaica","Saint Lucia","Colombia","Ecuador","Suriname","Tonga","Dominican Republic","Maldives","Mongolia","Turkmenistan","Samoa","Palestine, State of","Indonesia","Botswana","Egypt","Paraguay","Gabon","Bolivia (Plurinational State of)","Moldova","El Salvador","Uzbekistan","Philippines","South Africa","Syria","Iraq","Guyana","Vietnam","Cape Verde","Micronesia (Federated States of)","Guatemala","Kyrgyzstan","Namibia","East Timor","Honduras","Morocco","Vanuatu","Nicaragua","Kiribati","Tajikistan","India","Bhutan","Cambodia","Ghana","Laos","Republic of the Congo","Zambia","Bangladesh","Sao Tome and Principe","Equatorial Guinea","Nepal","Pakistan","Kenya","Swaziland","Angola","Myanmar","Rwanda","Cameroon","Nigeria","Yemen","Madagascar","Zimbabwe","Papua New Guinea","Solomon Islands","Comoros","United Republic of Tanzania","Mauritania","Lesotho","Senegal","Uganda","Benin","Sudan","Togo","Haiti","Afghanistan","Djibouti","Côte d'Ivoire","Gambia","Ethiopia","Malawi","Liberia","Mali","Guinea Bissau","Mozambique","Guinea","Burundi","Burkina Faso","Eritrea","Sierra Leone","Chad","Central African Republic","Democratic Republic of the Congo","Niger","South Korea","Marshall Islands","Monaco","Nauru","San Marino","Somalia","South Sudan","Tuvalu"];
 var lastSelectedMapCountry = "AFG";
@@ -41,7 +44,7 @@ dsv('gender_inequality.csv', function (data) {
                 if(availableMapCountries.indexOf(geo.properties.name) == -1){
                     return ['<div class="hoverinfo" style="color: red"><strong>',
                         geo.properties.name + ": ",
-                        'Unavaible data',
+                        'Unavailable data',
                         '</strong></div>'].join('');
                 }else{
                      return ['<div class="hoverinfo"><strong>',
@@ -118,9 +121,6 @@ function getCountryId(countryName){
     return "NULL";
 }
 
-var task1Initialized = false;
-var task4Initialized = false;
-
 function initializeData() {
     for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
         var attr = attributes[attrIndex].col;
@@ -196,11 +196,55 @@ function initializeInterface() {
             });
         })(n);
     }
+
+    var attributesSVG = d3.select('#attribute-selection').append('svg');
+    var width = 180;
+    attributesSVG.attr('width', width).attr('height', attributes.length * 17 - 1).attr('id', 'attribute-selector');
+    var enterSelection = attributesSVG.selectAll('g').data(attributes).enter();
+    var group = enterSelection.append('g');
+
+    for (var n = 0; n < attributeColors.length; ++n) {
+        group.append('rect')
+            .attr('x', n * (width / attributeColors.length))
+            .attr('y', function(d, i) { return i*17; })
+            .attr('width', width / attributeColors.length)
+            .attr('height', 16)
+            .attr('fill', attributeColors[n])
+            .attr('opacity', '0.5')
+            .attr('class', 'selection-mark')
+            .attr('data-attrcol', n)
+            .attr('data-attr', function(d, i) { return d['col']; })
+            .attr('display', function(d) { return visAttributeSelected[n] == d['col'] ? 'inline' : 'none'});
+    }
+
+    group.append('text')
+        .attr('x', width/2)
+        .attr('y', function(d, i) { return (i+1)*17 - 5; })
+        .attr('class', 'axistext')
+        .attr('fill', 'black').attr('text-anchor', 'middle').text(function(d, i) { return d['fullname']; });
+    for (var n = 0; n < attributeColors.length; ++n) {
+        group.append('rect')
+            .attr('x', n * (width / attributeColors.length))
+            .attr('y', function(d, i) { return i*17; })
+            .attr('width', width / attributeColors.length)
+            .attr('height', 16)
+            .attr('fill', attributeColors[n])
+            .attr('opacity', '0.14')
+            .attr('data-attrcol', n)
+            .attr('data-attr', function(d, i) { return d['col']; })
+            .attr('style', 'cursor: pointer')
+            .on('click', function() {
+                var thisEl = $(this);
+                changeAttribute(thisEl.attr('data-attrcol'), thisEl.attr('data-attr'));
+            });
+    }
 }
 
 function initializeVisualizations() {
+    initTask1();
     initTask2();
     initTask5();
+    initHorizontalDivergentBar();
 }
 
 function initTask2() {
@@ -297,8 +341,8 @@ function initTask2() {
             .attr('fill', 'red')
             .attr('opacity', 0.0)
             .attr('attr', attr).on('click', function() {
-            $('#attribute-selection-1 li[data-id="' + $(this).attr('attr') + '"]').trigger('click');
-        });
+                changeAttribute(0, $(this).attr('attr'));
+            });
     }
 
     svg.selectAll('circle.to-remove').remove();
@@ -328,6 +372,10 @@ function initTask2() {
                 .attr('fill', 'black').attr('text-anchor', countrySelectorNumber % 2 == 0 ? 'end' : 'start').text('').attr('attr', attr);
         }
         updateTask2(countrySelectorNumber, $('#country-selection-' + countrySelectorNumber + ' option:selected').attr('value'))
+    }
+
+    for (var attrNum = 0; attrNum < attributeColors.length; ++attrNum) {
+        updateAttributeTask2(attrNum, visAttributeSelected[attrNum]);
     }
 }
 
@@ -396,26 +444,6 @@ function changeSelectedCountry(countrySelectorNumber, selectedCountry) {
     updateTask1(countrySelectorNumber, selectedCountry);
 }
 
-function changeVisualizations() {
-    var value = $('.selected').attr("data-id");
-    if(!task1Initialized){
-        initTask1();
-        task1Initialized = true;
-
-    }
-    for (var n = 0; n < 2; ++n) {
-        updateTask1(n, $('#country-selection-' + n).find('option:selected').attr('value'));
-    }
-    if(value != "human-development"){
-        if(!task4Initialized){
-            initHorizontalDivergentBar();
-            task4Initialized = true;
-        }else
-            updateHorizontalDivergentBar();
-    }else
-        hideHorizontalDivergentBar();
-}
-
 function parseValue(val, decimals) {
   var exp = (decimals == undefined ? 10 : Math.pow(10, decimals));
   return Math.round(parseFloat(val.replace(/,/g, '.'))*exp)/exp;
@@ -451,7 +479,7 @@ function initHorizontalDivergentBar() {
     var w = 400 - margin.left - margin.right;
     var h = 350 - margin.top - margin.bottom;
 
-    var selectedAttr = $('.selected').attr("data-id");
+    var selectedAttr = visAttributeSelected[0];
 
     var svg = d3.select("#task4");
     svg = svg.append("svg")
@@ -489,7 +517,7 @@ function updateHorizontalDivergentBar() {
     var w = 400 - margin.left - margin.right;
     var h = 350 - margin.top - margin.bottom;
 
-    var selectedAttr = $('.selected').attr("data-id");
+    var selectedAttr = visAttributeSelected[0];
 
     var svg = visualizations.task4.svg;
 
@@ -669,7 +697,12 @@ function initTask1(){
     svg.append('line')
         .attr('id', 'task1line')
         .attr('x1', 0 - 2).attr('x2', 72)
-        .attr('stroke-width', 1).attr('stroke', 'black');
+        .attr('stroke-width', 1).attr('stroke', 'black')
+        .attr('y1', centerY).attr('y2', centerY);
+
+    for (var n = 0; n < 2; ++n) {
+        updateTask1(n, $('#country-selection-' + n).find('option:selected').attr('value'));
+    }
 }
 
 function updateTask1(countrySelectorNumber, selectedCountry) {
@@ -679,7 +712,7 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     var barMaxHeight = visualizations.task1.barMaxHeight;
     var centerY = visualizations.task1.centerY;
 
-    var selectedAttr = $('.selected').attr("data-id");
+    var selectedAttr = visAttributeSelected[0];
     var selectedRow = full_dataset[selectedCountry];
     var attrValue = parseValue(selectedRow[selectedAttr]);
 
@@ -732,9 +765,6 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
             .transition()   
             .duration(1000)
             .attr("y", attrValue>=0 ? (centerY - attrValue*valuesScale - 10) : (centerY - attrValue*valuesScale + 20));
-
-    var line = svg.select("#task1line");
-    line.attr('y1', centerY).attr('y2', centerY);
 }
 
 function initTask5() {
@@ -879,14 +909,18 @@ function initTask5() {
               $(this).attr('opacity', 0.3).attr('class', 'selected');
               
               for (var i = 0; i < attributeColors.length; ++i) {
-                  var attr = $('#attribute-selection-' + (i + 1) + ' li.selected').attr('data-id');
-                  if (attr != undefined)
-                      updateAttributeTask5(i, attr, true);
+                  var attr = visAttributeSelected[i];
+                  updateAttributeTask5(i, attr, true);
               }
           });
     }
-
     visualizations.task5 = {svg: svg, options: options};
+
+    for (var i = 0; i < attributeColors.length; ++i) {
+        var attr = visAttributeSelected[i];
+        updateAttributeTask5(i, attr, true);
+    }
+
 }
 
 function updateAttributeTask5(attributeNum, selectedAttribute, dontTransition) {
@@ -932,25 +966,27 @@ function initialize() {
     initializeVisualizations();
 }
 
-$('#attribute-selection li').click(function() {
-    var self = $(this);
-    self.parent().children('.selected').removeClass('selected');
-    self.addClass('selected');
-
-    updateAttribute(self.parent().attr('data-id') - 1, self.attr('data-id'));
-    changeVisualizations();
-});
-
-function updateAttribute(attributeNum, selectedAttribute) {
-    updateAttributeTask2(attributeNum, selectedAttribute);
-    updateAttributeTask5(attributeNum, selectedAttribute);
+function changeAttribute(attributeNum, selectedAttribute) {
+    var allSelectionMarks = '.selection-mark[data-attrcol="' + attributeNum + '"]';
+    $('#attribute-selector').find(allSelectionMarks).attr('display', 'none');
+    var selectionMark = allSelectionMarks + '[data-attr="' + selectedAttribute + '"]';
+    $('#attribute-selector').find(selectionMark).attr('display', 'inline');
+    updateAttribute(attributeNum, selectedAttribute);
 }
 
-function getSelectedText(elementId) {
-    var elt = document.getElementById(elementId);
+function updateAttribute(attributeNum, selectedAttribute) {
+    visAttributeSelected[attributeNum] = selectedAttribute;
 
-    if (elt.selectedIndex == -1)
-        return null;
+    if (attributeNum == 0) {
+        for (var n = 0; n < 2; ++n) {
+            updateTask1(n, $('#country-selection-' + n).find('option:selected').attr('value'));
+        }
 
-    return elt.options[elt.selectedIndex].text;
+        if(selectedAttribute != "human-development"){
+            updateHorizontalDivergentBar();
+        } else
+            hideHorizontalDivergentBar();
+    }
+    updateAttributeTask2(attributeNum, selectedAttribute);
+    updateAttributeTask5(attributeNum, selectedAttribute);
 }
