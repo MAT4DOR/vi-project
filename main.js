@@ -241,10 +241,12 @@ function initializeInterface() {
 }
 
 function initializeVisualizations() {
+    
     initTask1();
     initTask2();
-    initTask5();
     initHorizontalDivergentBar();
+    initTask5();
+    initTask3();
 }
 
 function initTask2() {
@@ -442,6 +444,7 @@ function changeSelectedCountry(countrySelectorNumber, selectedCountry) {
     changeSelectedCountryInMap(selectedCountry);
     updateTask2(countrySelectorNumber, selectedCountry);
     updateTask1(countrySelectorNumber, selectedCountry);
+    updateTask3(countrySelectorNumber, selectedCountry);
 }
 
 function parseValue(val, decimals) {
@@ -579,6 +582,9 @@ function updateHorizontalDivergentBar() {
                 .range([100, w-100]).nice();
     svg.selectAll("rect")
         .data(shortenedDataset)
+        .style("visibility", function(d) {
+                return "visible";
+              })
         .transition()   
         .duration(1000) 
         .attr("width",function(d) {
@@ -598,6 +604,9 @@ function updateHorizontalDivergentBar() {
 
     svg.selectAll("text.t4Values")
         .data(shortenedDataset)
+        .style("visibility", function(d) {
+                return "visible";
+              })
         .transition()   
         .duration(1000) 
         .attr("x", function(d) {  
@@ -640,6 +649,67 @@ function hideHorizontalDivergentBar() {
               .style("visibility", function(d) {
                 return "hidden";
               })
+}
+
+function initTask3() {
+    var margin = {top: 20, right: 20, bottom: 30, left: 20};
+    var w = 650 - margin.left - margin.right;
+    var h = 350 - margin.top - margin.bottom;
+
+    var selectedAttr = visAttributeSelected[0];
+
+    var svg = d3.select("#task3");
+    svg = svg.append("svg")
+            .attr("width",w)
+            .attr("height",h);
+
+    visualizations.task3 = {svg: svg};
+
+    svg.selectAll("rect")
+        .data(full_dataset)
+        .enter().append("rect")
+        .attr("fill","white");
+
+    updateTask3(0, $('#country-selection-' + 0 + ' option:selected').attr('value'));
+}
+
+function updateTask3(countrySelectorNumber, selectedCountry) {
+    var margin = {top: 20, right: 20, bottom: 30, left: 20};
+    var w = 650 - margin.left - margin.right;
+    var h = 350 - margin.top - margin.bottom;
+
+    var selectedAttr = visAttributeSelected[0];
+
+    var svg = visualizations.task3.svg;
+
+    var max = 0; //Math.max(Math.abs(parseValue(shortenedDataset[0][selectedAttr], 4)), Math.abs(parseValue(shortenedDataset[5][selectedAttr], 4)));
+
+    for(var i = 0; i < full_dataset.length; ++i) {
+        var parsedVal = parseValue(full_dataset[i][selectedAttr]); 
+        max = Math.max(parsedVal, max);
+    }
+
+    var y = d3.scale.linear()
+                .domain([-max, max])
+                .range([100, w-100]).nice();
+
+    svg.selectAll("rect")
+        .data(full_dataset)
+        .transition()   
+        .duration(1000) 
+        .attr("width",2)
+        .attr("height",function(d) {
+                return parseValue(d[selectedAttr], 4) < 0 ? 0 : y(parseValue(d[selectedAttr], 4))*10;//Math.abs(x(parseValue(d[selectedAttr], 4)) - x(0));
+            })
+        .attr("x", function(d, i) {
+                return i*3;
+            })
+        .attr("y", function(d, i) {
+                return h-(parseValue(d[selectedAttr], 4)*10);
+            })
+        .attr("fill",function(d, i) {
+                return i == selectedCountry ? "red" : "orange"; //different color for selected countries
+            });
 }
 
 function initTask1(){
@@ -987,6 +1057,7 @@ function updateAttribute(attributeNum, selectedAttribute) {
         } else
             hideHorizontalDivergentBar();
     }
+    updateTask3(0, $('#country-selection-0').find('option:selected').attr('value'));
     updateAttributeTask2(attributeNum, selectedAttribute);
     updateAttributeTask5(attributeNum, selectedAttribute);
 }
