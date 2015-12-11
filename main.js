@@ -495,7 +495,17 @@ function initHorizontalDivergentBar() {
     svg.selectAll("rect")
         .data(shortenedDataset)
         .enter().append("rect")
-        .attr("fill","white");
+        .attr("fill","white")
+        .on('click', function() {
+          var country = $(this).attr('data-country');
+          for (var i = 0; i < full_dataset.length; ++i) {
+              if(full_dataset[i]["country"] == country){
+                  $("#country-selection-"+selectionIndex).val(i);
+                  changeSelectedCountry(selectionIndex, i);
+                  break;
+              }
+          }
+        });
 
 
     // Add text numbers in bar
@@ -582,25 +592,16 @@ function updateHorizontalDivergentBar() {
                 .range([100, w-100]).nice();
     svg.selectAll("rect")
         .data(shortenedDataset)
-        .style("visibility", function(d) {
-                return "visible";
-              })
+        .style("visibility", function(d) { return "visible"; })
+        .attr('data-country', function(d) { return d.country; })
         .transition()   
         .duration(1000) 
-        .attr("width",function(d) {
-                    return Math.abs(x(parseValue(d[selectedAttr], 4)) - x(0));
-            })
+        .attr("width",function(d) { return Math.abs(x(parseValue(d[selectedAttr], 4)) - x(0)); })
         .attr("height",20)
         .attr("fill","purple")
-        .attr("x",function(d) {
-            return x(Math.min(parseValue(d[selectedAttr], 4), 0));
-            })
-        .attr("y",function(d, i) {
-            return i>=3 ? i*(21 + 16) + 42 : i*(21 + 16);
-            })
-        .attr("fill",function(d, i) {
-            return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue"
-            });
+        .attr("x",function(d) { return x(Math.min(parseValue(d[selectedAttr], 4), 0)); })
+        .attr("y",function(d, i) { return i>=3 ? i*(21 + 16) + 42 : i*(21 + 16); })
+        .attr("fill",function(d, i) { return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue" });
 
     svg.selectAll("text.t4Values")
         .data(shortenedDataset)
@@ -656,8 +657,6 @@ function initTask3() {
     var w = 650 - margin.left - margin.right;
     var h = 350 - margin.top - margin.bottom;
 
-    var selectedAttr = visAttributeSelected[0];
-
     var svg = d3.select("#task3");
     svg = svg.append("svg")
             .attr("width",w)
@@ -670,7 +669,9 @@ function initTask3() {
         .enter().append("rect")
         .attr("fill","white");
 
-    updateTask3(0, $('#country-selection-' + 0 + ' option:selected').attr('value'));
+    for (var n = 0; n < 2; ++n) {
+        updateTask3(n, $('#country-selection-' + n).find('option:selected').attr('value'));
+    }
 }
 
 function updateTask3(countrySelectorNumber, selectedCountry) {
@@ -679,40 +680,22 @@ function updateTask3(countrySelectorNumber, selectedCountry) {
     var h = 350 - margin.top - margin.bottom;
 
     var selectedAttr = visAttributeSelected[0];
+    var attr = findAttributeByCol(selectedAttr);
 
     var svg = visualizations.task3.svg;
 
-    var max = 0;
-    var cleanedArray = [];
-
-    for(var i = 0; i < full_dataset.length; ++i) {
-        var parsedVal = parseValue(full_dataset[i][selectedAttr],4); 
-        if(parsedVal>0)
-            cleanedArray.push( full_dataset[i]);
-        max = Math.max(parsedVal, max);
-    }
-
-    var y = d3.scale.linear()
-                .domain([-max, max])
-                .range([100, w-100]).nice();
+    var min = selectedAttr.endsWith('_diff') ? -attr.max : 0;
+    var y = d3.scale.linear().domain([attr.max, min]).range([50, h-50]);
 
     svg.selectAll("rect")
-        .data(cleanedArray)
+        .data(full_dataset)
         .transition()   
         .duration(1000) 
         .attr("width",2)
-        .attr("height",function(d) {
-                return parseValue(d[selectedAttr], 4) < 0 ? 0 : y(parseValue(d[selectedAttr], 4));
-            })
-        .attr("x", function(d, i) {
-                return i*3;
-            })
-        .attr("y", function(d, i) {
-                return h-(parseValue(d[selectedAttr], 4));
-            })
-        .attr("fill",function(d, i) {
-                return i == selectedCountry ? "red" : "orange"; //different color for selected countries
-            });
+        .attr("height",function(d) { return Math.abs(y(parseValue(d[selectedAttr], 4)) - y(0)); })
+        .attr("x", function(d, i) { return i*3; })
+        .attr("y", function(d, i) { return y(Math.max(parseValue(d[selectedAttr], 4), 0)); })
+        .attr("fill",function(d, i) { return (isMissingValue(d, selectedAttr) ? 'white' : (i == selectedCountry ? countryColors[countrySelectorNumber] : 'red'));  }); //different color for selected countries
 }
 
 function initTask1(){
@@ -1052,7 +1035,9 @@ function updateAttribute(attributeNum, selectedAttribute) {
 
     if (attributeNum == 0) {
         for (var n = 0; n < 2; ++n) {
-            updateTask1(n, $('#country-selection-' + n).find('option:selected').attr('value'));
+            var country = $('#country-selection-' + n).find('option:selected').attr('value');
+            updateTask1(n, country);
+            updateTask3(n, country);
         }
 
         if(selectedAttribute != "human-development"){
@@ -1060,7 +1045,6 @@ function updateAttribute(attributeNum, selectedAttribute) {
         } else
             hideHorizontalDivergentBar();
     }
-    updateTask3(0, $('#country-selection-0').find('option:selected').attr('value'));
     updateAttributeTask2(attributeNum, selectedAttribute);
     updateAttributeTask5(attributeNum, selectedAttribute);
 }
