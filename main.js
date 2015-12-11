@@ -349,10 +349,21 @@ function initTask2() {
 
     svg.selectAll('circle.to-remove').remove();
     visualizations.task2 = { options: options, attributes: attributes, svg: svg, scaleY: scaleY, scaleX: scaleX };
+    
     for (var countrySelectorNumber = 0; countrySelectorNumber < countryColors.length; ++countrySelectorNumber) {
         var group = svg.append('g').attr('class', 'selector-' + countrySelectorNumber);
         for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
             var attr = attributes[attrIndex].col;
+            var maxRank = attributes[attrIndex].maxRank;
+            
+            var tip = d3.tip()
+                .attr('class', 'd3-tip')
+                .offset([-10, 0])
+                .html(function(d) {
+                    return "<strong>Rank:</strong> <span>" + d['rank_' + attr] + '/' + maxRank + "</span>";
+                });
+            svg.call(tip);
+            
             if (options.notInteresting.indexOf(attr) != -1)
                 continue;
             var x0 = scaleX(attributes[attrIndex].shortname);
@@ -363,7 +374,9 @@ function initTask2() {
                 .attr('cx', x0)
                 .attr('cy', farValue)
                 .attr('opacity', 0.6)
-                .attr('attr', attr).append('title').text('');
+                .attr('attr', attr)
+                .on('mouseover', tip.show)
+                .on('mouseout', tip.hide);
 
             group.append('line')
                 .attr('x1', x0 + (countrySelectorNumber % 2 == 0 ? -2 : 2)).attr('x2', x0 + (countrySelectorNumber % 2 == 0 ? -8 : 8))
@@ -402,7 +415,6 @@ function updateTask2(countrySelectorNumber, selectedCountry) {
             return scaleY[attr](parseValue(d[attr], 4));
         };
         selection.select('circle[attr="' + attr + '"]').transition().duration(1000).attr('cy', centerY);
-        selection.select('circle[attr="' + attr + '"] title').text(function(d) { return 'Rank: ' + d['rank_' + attr] + '/' + attributes[attrIndex].maxRank; });
         selection.select('text[attr="' + attr + '"]').text(function(d) { return parseValue(d[attr], attr == 'gii_value' ? 3 : 1); }).transition().duration(1000).attr('y',  centerY);
         var y = function (d, i) {
             if (d[attr] == '-1')
