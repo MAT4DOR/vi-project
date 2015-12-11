@@ -682,10 +682,13 @@ function updateTask3(countrySelectorNumber, selectedCountry) {
 
     var svg = visualizations.task3.svg;
 
-    var max = 0; //Math.max(Math.abs(parseValue(shortenedDataset[0][selectedAttr], 4)), Math.abs(parseValue(shortenedDataset[5][selectedAttr], 4)));
+    var max = 0;
+    var cleanedArray = [];
 
     for(var i = 0; i < full_dataset.length; ++i) {
-        var parsedVal = parseValue(full_dataset[i][selectedAttr]); 
+        var parsedVal = parseValue(full_dataset[i][selectedAttr],4); 
+        if(parsedVal>0)
+            cleanedArray.push( full_dataset[i]);
         max = Math.max(parsedVal, max);
     }
 
@@ -694,18 +697,18 @@ function updateTask3(countrySelectorNumber, selectedCountry) {
                 .range([100, w-100]).nice();
 
     svg.selectAll("rect")
-        .data(full_dataset)
+        .data(cleanedArray)
         .transition()   
         .duration(1000) 
         .attr("width",2)
         .attr("height",function(d) {
-                return parseValue(d[selectedAttr], 4) < 0 ? 0 : y(parseValue(d[selectedAttr], 4))*10;//Math.abs(x(parseValue(d[selectedAttr], 4)) - x(0));
+                return parseValue(d[selectedAttr], 4) < 0 ? 0 : y(parseValue(d[selectedAttr], 4));
             })
         .attr("x", function(d, i) {
                 return i*3;
             })
         .attr("y", function(d, i) {
-                return h-(parseValue(d[selectedAttr], 4)*10);
+                return h-(parseValue(d[selectedAttr], 4));
             })
         .attr("fill",function(d, i) {
                 return i == selectedCountry ? "red" : "orange"; //different color for selected countries

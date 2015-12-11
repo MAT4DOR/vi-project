@@ -73,6 +73,10 @@ div#task1 {
 div#task2 {
 }
 
+div#task3 {
+    transform: translate(700px, -400px);
+}
+
 div#task4 {
     transform: translate(700px, 220px);
 }
