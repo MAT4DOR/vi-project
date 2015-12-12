@@ -56,6 +56,10 @@ dsv('gender_inequality.csv', function (data) {
         },
         element: document.getElementById('container'),
         done: function(datamap) {
+             datamap.svg.call(d3.behavior.zoom().on("zoom", redraw));
+            function redraw() {
+                datamap.svg.selectAll("g").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+            }
             var counter = 0;
             datamap.svg.selectAll('.datamaps-subunit').each(function(geography){
                 if(availableMapCountries.indexOf(geography.properties.name) == -1){
