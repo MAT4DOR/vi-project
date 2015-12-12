@@ -261,14 +261,22 @@ function initTask2() {
         padding: 60,
         paddingLeft: 40,
         paddingRight: 10,
+        marginBottom: 20, // kind of.. we will be writing the label there..
         notInteresting: ['gii_rank', 'human-development']
     }
     var svg = d3.select('#task2').append('svg');
-    svg.attr('width', options.width).attr('height', options.height);
+    svg.attr('width', options.width).attr('height', (options.height+options.marginBottom));
+
+    svg.append('text')
+        .attr('x', options.width/2)
+        .attr('y', options.height+options.marginBottom-10)
+        .attr('text-anchor', 'middle')
+        .attr('style', 'font-weight: bold')
+        .text('Distribution of countries for each attribute, highlighting the selected countries and attributes');
 
     var enterSelection = svg.selectAll('circle').data(full_dataset).enter();
 
-    var scaleX = d3.scale.ordinal().rangeRoundBands([options.paddingLeft, options.width - options.paddingRight]);
+    var scaleX = d3.scale.ordinal().rangeRoundBands([options.paddingLeft, options.width]);
     scaleX.domain(attributes.map(function(d) {
         if (options.notInteresting.indexOf(d.col) != -1)
             return undefined;
@@ -359,28 +367,31 @@ function initTask2() {
         for (var attrIndex = 0; attrIndex < attributes.length; ++attrIndex) {
             var attr = attributes[attrIndex].col;
             var maxRank = attributes[attrIndex].maxRank;
-            
-            var tip = d3.tip()
-                .attr('class', 'd3-tip')
-                .offset([-10, 0])
-                .html(function(d) {
-                    return "<strong>Rank:</strong> <span>" + d['rank_' + attr] + '/' + maxRank + "</span>";
-                });
-            svg.call(tip);
-            
+
             if (options.notInteresting.indexOf(attr) != -1)
                 continue;
+
             var x0 = scaleX(attributes[attrIndex].shortname);
             var farValue = scaleY[attr](0);
-            group.append('circle')
+            var circle = group.append('circle')
                 .attr('fill', countryColors[countrySelectorNumber])
                 .attr('r', 5)
                 .attr('cx', x0)
                 .attr('cy', farValue)
                 .attr('opacity', 0.6)
-                .attr('attr', attr)
-                .on('mouseover', tip.show)
-                .on('mouseout', tip.hide);
+                .attr('attr', attr);
+
+            (function(circle, attr, maxRank) {
+                var tip = d3.tip()
+                    .attr('class', 'd3-tip')
+                    .offset([-10, 0])
+                    .html(function(d) {
+                        return "<strong>Rank:</strong> <span>" + d['rank_' + attr] + '/' + maxRank + "</span>";
+                    });
+                svg.call(tip);
+                circle.on('mouseover', tip.show)
+                    .on('mouseout', tip.hide);
+            })(circle, attr, maxRank);
 
             group.append('line')
                 .attr('x1', x0 + (countrySelectorNumber % 2 == 0 ? -2 : 2)).attr('x2', x0 + (countrySelectorNumber % 2 == 0 ? -8 : 8))
@@ -747,14 +758,14 @@ function initTask1(){
       .attr("id", "barCountry0")
       .attr("x", 0)
       .attr("width", 30)
-      .attr("fill",country0Color).append('title').text('');
+      .attr("fill",country0Color);
 
      svg.append("rect")
       .attr("class", "bar")
       .attr("id", "barCountry1")
       .attr("x", 40)
       .attr("width", 30)
-      .attr("fill",country1Color).append('title').text('');
+      .attr("fill",country1Color);
 
     svg.append("text")
         .attr("id","task1label0")
@@ -771,6 +782,14 @@ function initTask1(){
         .attr('x1', 0 - 2).attr('x2', 72)
         .attr('stroke-width', 1).attr('stroke', 'black')
         .attr('y1', centerY).attr('y2', centerY);
+
+    var tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .offset([-10, 0])
+        .html(function(d) {  return "<strong>Rank:</strong> <span>" + d['rank'] + '/' + d['maxRank'] + "</span>"; });
+    svg.call(tip);
+
+    visualizations.task1.tip = tip;
 
     for (var n = 0; n < 2; ++n) {
         updateTask1(n, $('#country-selection-' + n).find('option:selected').attr('value'));
@@ -804,7 +823,8 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
             .duration(1000)
             .attr("height", 0)
             .attr("y", centerY);
-        bar.select('title').text('');
+        bar.on('mouseover', null)
+            .on('mouseout', null);
 
         var label = svg.select("#task1label"+countrySelectorNumber);
             label.attr("y", centerY)
@@ -827,10 +847,12 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
 
     var bar = svg.select("#barCountry"+countrySelectorNumber);
     bar.transition()
-       .duration(1000)
-      .attr("height", Math.abs(attrValue*valuesScale))
-      .attr("y", Math.min(centerY, centerY - attrValue*valuesScale));
-    bar.select('title').text('Rank: ' + selectedRow['rank_' + selectedAttr] + '/' + findAttributeByCol(selectedAttr).maxRank);
+        .duration(1000)
+        .attr("height", Math.abs(attrValue*valuesScale))
+        .attr("y", Math.min(centerY, centerY - attrValue*valuesScale));
+    bar.on('mouseover', visualizations.task1.tip.show)
+        .on('mouseout', visualizations.task1.tip.hide);
+    bar.data([{rank: selectedRow['rank_' + selectedAttr], maxRank: findAttributeByCol(selectedAttr).maxRank}]);
 
     var label = svg.select("#task1label"+countrySelectorNumber);
     label.text(attrValue)
@@ -846,11 +868,19 @@ function initTask5() {
         paddingLeft: 10,
         paddingTop: 40,
         paddingBottom: 5,
-        paddingRight: 10
+        paddingRight: 10,
+        marginBottom: 20
     }
 
     var svg = d3.select('#task5').append('svg');
-    svg.attr('width', options.width).attr('height', options.height);
+    svg.attr('width', options.width).attr('height', options.height+options.marginBottom);
+
+    svg.append('text')
+        .attr('x', options.width/2)
+        .attr('y', options.height+options.marginBottom-10)
+        .attr('text-anchor', 'middle')
+        .attr('style', 'font-weight: bold')
+        .text('Two plots superimposed to explore correlation between attributes. Countries(dots) ordered by Human Development.');
 
     var x = d3.scale.linear().domain([1, full_dataset.length]).range([options.paddingLeft, options.width-options.paddingRight]);
 
@@ -1017,7 +1047,8 @@ function updateAttributeTask5(attributeNum, selectedAttribute, dontTransition) {
         path = path.transition().duration(1000);
     }
 
-    circles.attr('cy', function(d) { return isMissingValue(d, selectedAttribute) ? options.height + 5 : y(parseValue(d[selectedAttribute], 4) / attribute.max); });
+    circles.attr('opacity', function(d) { return isMissingValue(d, selectedAttribute) ? '0.0' : '0.8'; });
+    circles.attr('cy', function(d) { return isMissingValue(d, selectedAttribute) ? options.height : y(parseValue(d[selectedAttribute], 4) / attribute.max); });
     path.attr('d', line);
 }
 
