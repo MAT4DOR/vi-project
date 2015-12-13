@@ -19,14 +19,15 @@ var attributes = [
     {col: 'human-development', shortname:'Human Development', fullname: 'Human Development', max: undefined},
 ];
 var availableMapCountries = [];
-var selectedCountries = ["Afghanistan", "Afghanistan"];
-var selectedCountriesId = ["AFG","AFG"];
+var selectedCountries = ["Afghanistan", "Albania"];
+var selectedCountriesId = ["AFG","ALB"];
 var countryIdMap = [];
 
 var mapBackgroundColor = "#8DCDE3";
 var country0Color = "#FF5500";
 var country1Color = "#00FF55";
-var mapHoverColor = "rgb(255,150,0)";
+var mapHoverColor0 = "rgb(255,150,0)";
+var mapHoverColor1 = "#95FCB7";
 var mapUnavailableColor = "rgb(50,50,50)";
 
 var dsv = d3.dsv(';', 'text/plain');
@@ -54,14 +55,6 @@ dsv('gender_inequality.csv', function (data) {
         },
         element: document.getElementById('container'),
         done: function(datamap) {
-            $("#country-selection-0").val(168);
-            changeSelectedCountry(0, 168);
-            $("#country-selection-1").val(94);
-            changeSelectedCountry(1, 94);
-            datamap.svg.call(d3.behavior.zoom().on("zoom", redraw));
-            function redraw() {
-                datamap.svg.selectAll("g").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-            }
             var counter = 0;
             datamap.svg.selectAll('.datamaps-subunit').each(function(geography){
                 if(availableMapCountries.indexOf(geography.properties.name) == -1){
@@ -71,6 +64,14 @@ dsv('gender_inequality.csv', function (data) {
                     countryIdMap[counter++] = [geography.properties.name, geography.id];
                 }
             });
+            $("#country-selection-0").val(168);
+            changeSelectedCountry(0, 168);
+            $("#country-selection-1").val(94);
+            changeSelectedCountry(1, 94);
+            datamap.svg.call(d3.behavior.zoom().on("zoom", redraw));
+            function redraw() {
+                datamap.svg.selectAll("g").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+            }
             console.log(countryIdMap);
             datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
                 for (var i = 0; i < full_dataset.length; ++i) {
@@ -85,7 +86,10 @@ dsv('gender_inequality.csv', function (data) {
                 var countryName = geography.properties.name;
                 if(availableMapCountries.indexOf(countryName) != -1){
                     if(selectedCountries.indexOf(countryName) == -1){
-                        $(this).css("fill",mapHoverColor);           
+                        var selIndex = $('input[name="radioCountry"]:checked').val();
+                        if(selIndex == 0)
+                            $(this).css("fill",mapHoverColor0);
+                        else $(this).css("fill",mapHoverColor1);
                     }
                 }   
             });
