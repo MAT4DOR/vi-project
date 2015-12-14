@@ -532,6 +532,7 @@ function initHorizontalDivergentBar() {
             .attr("height",h);
 
     visualizations.task4 = {svg: svg};
+    var selectionIndex = 0;
 
     var shortenedDataset = [0, 1, 2, 3, 4, 5]; // 6 dummy objects to init the svg
     svg.selectAll("rect")
@@ -549,6 +550,12 @@ function initHorizontalDivergentBar() {
           }
         });
 
+    svg.append('text')
+        .attr('x', w/2)
+        .attr('y', h+margin.bottom-50)
+        .attr('text-anchor', 'middle')
+        .attr('style', 'font-weight: bold')
+        .text('Countries ordered by the selected attribute, highlighting the highest and lowest.');
 
     // Add text numbers in bar
     svg.selectAll("text.t4Values")
@@ -643,7 +650,7 @@ function updateHorizontalDivergentBar() {
         .attr("fill","purple")
         .attr("x",function(d) { return x(Math.min(parseValue(d[selectedAttr], 4), 0)); })
         .attr("y",function(d, i) { return i>=3 ? i*(21 + 16) + 42 : i*(21 + 16); })
-        .attr("fill",function(d, i) { return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue" });
+        .attr("fill",function(d, i) { return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue" })
 
     svg.selectAll("text.t4Values")
         .data(shortenedDataset)
@@ -711,6 +718,23 @@ function initTask3() {
         .enter().append("rect")
         .attr("fill","white");
 
+    svg.append('text')
+        .attr('x', w/2-60)
+        .attr('y', h+margin.bottom-60)
+        .attr('text-anchor', 'middle')
+        .attr('style', 'font-weight: bold')
+        .text('An overview by attribute of the countries, ordered by Human Development Index ');
+
+
+    var selectedAttr = visAttributeSelected[0];
+    var attr = findAttributeByCol(selectedAttr);
+    var tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .offset([-10, 0])
+        .html(function(d) {  return "<span>" + d["country"]+ "\n Rank: "+ d['rank_' + selectedAttr] + "</span>"; });
+    svg.call(tip);
+    visualizations.task3.tip = tip;
+
     for (var n = 0; n < 2; ++n) {
         updateTask3(n, $('#country-selection-' + n).find('option:selected').attr('value'));
     }
@@ -731,13 +755,17 @@ function updateTask3(countrySelectorNumber, selectedCountry) {
 
     svg.selectAll("rect")
         .data(full_dataset)
+        .on('mouseover', visualizations.task3.tip.show)
+        .on('mouseout', visualizations.task3.tip.hide)
         .transition()   
         .duration(1000) 
         .attr("width",2)
         .attr("height",function(d) { return Math.abs(y(parseValue(d[selectedAttr], 4)) - y(0)); })
         .attr("x", function(d, i) { return i*3; })
         .attr("y", function(d, i) { return y(Math.max(parseValue(d[selectedAttr], 4), 0)); })
-        .attr("fill",function(d, i) { return (isMissingValue(d, selectedAttr) ? 'white' : (i == selectedCountry ? countryColors[countrySelectorNumber] : 'red'));  }); //different color for selected countries
+        .attr("fill",function(d, i) { return (isMissingValue(d, selectedAttr) ? 'white' : (d["country"] == selectedCountries[0] ? countryColors[0] : d["country"] == selectedCountries[1] ? 
+            countryColors[1] : 'blue'));  
+        });
 }
 
 function initTask1(){
@@ -753,6 +781,13 @@ function initTask1(){
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     visualizations.task1 = {svg: svg, _width: width, _height: height, barMaxHeight: barMaxHeight, centerY: centerY};
+
+    svg.append('text')
+        .attr('x', width/2-60)
+        .attr('y', height+margin.bottom-30)
+        .attr('text-anchor', 'middle')
+        .attr('style', 'font-weight: bold')
+        .text('Two bars that compare the two selected countries on the selected attribute');
 
     svg.append("text")
         .attr("id", "country0NameText")
@@ -823,6 +858,7 @@ function updateTask1(countrySelectorNumber, selectedCountry) {
     var attrValue = parseValue(selectedRow[selectedAttr]);
 
     svg.select("#country"+countrySelectorNumber+"NameText").text(selectedRow["country"]);
+
     var isUnavailable = false;
     if(selectedAttr.endsWith("_diff")){
         var attrParent = selectedAttr.substr(0, selectedAttr.indexOf('_diff'));
