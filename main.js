@@ -725,13 +725,10 @@ function initTask3() {
         .attr('style', 'font-weight: bold')
         .text('An overview by attribute of the countries, ordered by Human Development Index ');
 
-
-    var selectedAttr = visAttributeSelected[0];
-    var attr = findAttributeByCol(selectedAttr);
     var tip = d3.tip()
         .attr('class', 'd3-tip')
         .offset([-10, 0])
-        .html(function(d) {  return "<span>" + d["country"]+ "\n Rank: "+ d['rank_' + selectedAttr] + "</span>"; });
+        .html(function(d) { return "<span>" + d["country"]+ "\n Rank: "+ d['rank_'+visAttributeSelected[0]] + "</span>"; });
     svg.call(tip);
     visualizations.task3.tip = tip;
 
@@ -744,6 +741,11 @@ function updateTask3(countrySelectorNumber, selectedCountry) {
     var margin = {top: 20, right: 20, bottom: 30, left: 20};
     var w = 650 - margin.left - margin.right;
     var h = 350 - margin.top - margin.bottom;
+
+    if(countrySelectorNumber == 0)
+        visualizations.country0 = selectedCountry;
+    else
+        visualizations.country1 = selectedCountry;
 
     var selectedAttr = visAttributeSelected[0];
     var attr = findAttributeByCol(selectedAttr);
@@ -763,7 +765,7 @@ function updateTask3(countrySelectorNumber, selectedCountry) {
         .attr("height",function(d) { return Math.abs(y(parseValue(d[selectedAttr], 4)) - y(0)); })
         .attr("x", function(d, i) { return i*3; })
         .attr("y", function(d, i) { return y(Math.max(parseValue(d[selectedAttr], 4), 0)); })
-        .attr("fill",function(d, i) { return (isMissingValue(d, selectedAttr) ? 'white' : (d["country"] == selectedCountries[0] ? countryColors[0] : d["country"] == selectedCountries[1] ? 
+        .attr("fill",function(d, i) { return (isMissingValue(d, selectedAttr) ? 'white' : (i == visualizations.country0 ? countryColors[0] : i == visualizations.country1 ? 
             countryColors[1] : 'blue'));  
         });
 }
@@ -1130,7 +1132,6 @@ function changeAttribute(attributeNum, selectedAttribute) {
 
 function updateAttribute(attributeNum, selectedAttribute) {
     visAttributeSelected[attributeNum] = selectedAttribute;
-
     if (attributeNum == 0) {
         for (var n = 0; n < 2; ++n) {
             var country = $('#country-selection-' + n).find('option:selected').attr('value');
