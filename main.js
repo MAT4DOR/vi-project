@@ -5,18 +5,18 @@ var attributeColors = ['#7bf', '#fd4'];
 var visAttributeSelected = ['gii_value', 'gii_rank'];
 
 var attributes = [
-    {col: 'gii_value', shortname:'GII Value', fullname: 'Gender Inequality Index Value', max:1},
-    {col: 'gii_rank', shortname:'GII Rank', fullname: 'Gender Inequality Index Rank', max:-1},
-    {col: 'mmr', shortname:'Maternal Mortality', fullname: 'Maternal Mortality Ratio', max:-1},
-    {col: 'abr', shortname:'Adolencent Births', fullname: 'Adolescent Birth Rate', max:-1},
-    {col: 'ssp', shortname:'Seats Parliament', fullname: 'Share of seats in national parliament', max:100},
-    {col: 'edu_female', shortname:'Education Female', fullname: 'Education Female', max:100},
-    {col: 'edu_male', shortname:'Education Male', fullname: 'Gender Education Male', max:100},
-    {col: 'edu_diff', shortname:'Education Difference', fullname: 'Difference Female-Male Education', max:100},
-    {col: 'labour_female', shortname:'Labour Female', fullname: 'Labour Rate Female', max:100},
-    {col: 'labour_male', shortname:'Labour Male', fullname: 'Labour Rate Male', max:100},
-    {col: 'labour_diff', shortname:'Labour Difference', fullname: 'Difference Female-Male Labour Rate', max:100},
-    {col: 'human-development', shortname:'Human Development', fullname: 'Human Development', max: undefined},
+    {col: 'gii_value', shortname:'GII Value', fullname: 'Gender Inequality Index Value', max:1, description: 'Value of Gender Inequality Index'},
+    {col: 'gii_rank', shortname:'GII Rank', fullname: 'Gender Inequality Index Rank', max:-1, description: 'Rank of Gender Inequality Index'},
+    {col: 'mmr', shortname:'Maternal Mortality', fullname: 'Maternal Mortality Ratio', max:-1, description: 'Deaths  per 100,000 live births'},
+    {col: 'abr', shortname:'Adolencent Births', fullname: 'Adolescent Birth Rate', max:-1, description: 'Births per 1,000 women aged 15-19'},
+    {col: 'ssp', shortname:'Seats Parliament', fullname: 'Share of seats in national parliament', max:100, description: 'Percentage held by women'},
+    {col: 'edu_female', shortname:'Education Female', fullname: 'Education Female', max:100, description: 'Percentage aged 25 and above'},
+    {col: 'edu_male', shortname:'Education Male', fullname: 'Gender Education Male', max:100, description: 'Percentage aged 25 and above'},
+    {col: 'edu_diff', shortname:'Education Difference', fullname: 'Difference Female-Male Education', max:100, description: 'Percentage difference aged 25 and above'},
+    {col: 'labour_female', shortname:'Labour Female', fullname: 'Labour Rate Female', max:100, description: 'Percentage aged 15 and above)'},
+    {col: 'labour_male', shortname:'Labour Male', fullname: 'Labour Rate Male', max:100, description: 'Percentage aged 15 and above)'},
+    {col: 'labour_diff', shortname:'Labour Difference', fullname: 'Difference Female-Male Labour Rate', max:100, description: 'Percentage difference aged 15 and above'},
+    //{col: 'human-development', shortname:'Human Development', fullname: 'Human Development', max: undefined},
 ];
 var availableMapCountries = [];
 var selectedCountries = ["Afghanistan", "Albania"];
@@ -180,6 +180,9 @@ function initializeData() {
         }
         attributes[attrIndex].maxRank = validSeen;
     }
+    for (var i = 0; i < full_dataset.length; ++i) {
+        full_dataset[i].id = i;
+    }
 }
 
 function initializeInterface() {
@@ -218,7 +221,7 @@ function initializeInterface() {
 
     var attributesSVG = d3.select('#attribute-selection').append('svg');
     var width = 180;
-    attributesSVG.attr('width', width).attr('height', attributes.length * 17 - 1).attr('id', 'attribute-selector');
+    attributesSVG.attr('width', width + 20).attr('height', attributes.length * 17 - 1).attr('id', 'attribute-selector');
     var enterSelection = attributesSVG.selectAll('g').data(attributes).enter();
     var group = enterSelection.append('g');
 
@@ -241,6 +244,45 @@ function initializeInterface() {
         .attr('y', function(d, i) { return (i+1)*17 - 5; })
         .attr('class', 'axistext')
         .attr('fill', 'black').attr('text-anchor', 'middle').text(function(d, i) { return d['fullname']; });
+
+    var infoIcon = group.selectAll('g').data(attributes).enter().append('g');
+    infoIcon.attr('transform', function(d, i) { return 'translate(180, ' + (17*i) + ')'; });
+
+    var tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .direction('e')
+        .offset([0, 10])
+        .html(function(d) {
+            return '<span>' + d.description + '</span>';
+        });
+
+    attributesSVG.call(tip);
+
+    infoIcon.append('circle')
+        .attr('cx', 8)
+        .attr('cy', 8)
+        .attr('r', 6)
+        .attr('fill', '#184cff')
+        .attr('stroke', '#1533b9');
+    infoIcon.append('circle')
+        .attr('cx', 8)
+        .attr('cy', 5)
+        .attr('r', 1.5)
+        .attr('fill', '#fff');
+    infoIcon.append('path')
+        .attr('d', 'm 8,8 0,4.5')
+        .attr('stroke', '#fff')
+        .attr('stroke-width', '2')
+        .attr('stroke-linecap', 'round');
+
+    infoIcon.append('circle')
+        .attr('cx', 8)
+        .attr('cy', 8)
+        .attr('r', 6)
+        .attr('opacity', 0)
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide);
+
     for (var n = 0; n < attributeColors.length; ++n) {
         group.append('rect')
             .attr('x', n * (width / attributeColors.length))
@@ -487,6 +529,7 @@ function changeSelectedCountry(countrySelectorNumber, selectedCountry) {
     updateTask2(countrySelectorNumber, selectedCountry);
     updateTask1(countrySelectorNumber, selectedCountry);
     updateTask3(countrySelectorNumber, selectedCountry);
+    updateHorizontalDivergentBar();
 }
 
 function parseValue(val, decimals) {
@@ -532,7 +575,6 @@ function initHorizontalDivergentBar() {
             .attr("height",h);
 
     visualizations.task4 = {svg: svg};
-    var selectionIndex = 0;
 
     var shortenedDataset = [0, 1, 2, 3, 4, 5]; // 6 dummy objects to init the svg
     svg.selectAll("rect")
@@ -543,6 +585,7 @@ function initHorizontalDivergentBar() {
           var country = $(this).attr('data-country');
           for (var i = 0; i < full_dataset.length; ++i) {
               if(full_dataset[i]["country"] == country){
+                  var selectionIndex = $('input[name="radioCountry"]:checked').val();
                   $("#country-selection-"+selectionIndex).val(i);
                   changeSelectedCountry(selectionIndex, i);
                   break;
@@ -650,7 +693,7 @@ function updateHorizontalDivergentBar() {
         .attr("fill","purple")
         .attr("x",function(d) { return x(Math.min(parseValue(d[selectedAttr], 4), 0)); })
         .attr("y",function(d, i) { return i>=3 ? i*(21 + 16) + 42 : i*(21 + 16); })
-        .attr("fill",function(d, i) { return i==0 ? "green" : i==shortenedDataset.length-1 ? "red" : "blue" })
+        .attr("fill",function(d, i) { return (d.id == visualizations.country0 ? countryColors[0] : (d.id == visualizations.country1 ? countryColors[1] : 'blue')); })
 
     svg.selectAll("text.t4Values")
         .data(shortenedDataset)
@@ -687,20 +730,6 @@ function updateHorizontalDivergentBar() {
         .text(function(d) { return d.country; });
 }
 
-function hideHorizontalDivergentBar() {
-	var svg = visualizations.task4.svg;
-
-	svg.selectAll("rect")
-              .style("visibility", function(d) {
-                return "hidden";
-              })
-
-    svg.selectAll("text")
-              .style("visibility", function(d) {
-                return "hidden";
-              })
-}
-
 function initTask3() {
     var margin = {top: 20, right: 20, bottom: 30, left: 20};
     var w = 650 - margin.left - margin.right;
@@ -716,7 +745,14 @@ function initTask3() {
     svg.selectAll("rect")
         .data(full_dataset)
         .enter().append("rect")
-        .attr("fill","white");
+        .attr("fill","white")
+        .attr('data-id', function(d, i) { return i; })
+        .on('click', function() {
+            var countryId = $(this).attr('data-id');
+            var selIndex = $('input[name="radioCountry"]:checked').val();
+            $("#country-selection-"+selIndex).val(countryId);
+            changeSelectedCountry(selIndex, countryId);
+        });
 
     svg.append('text')
         .attr('x', w/2-60)
@@ -728,7 +764,7 @@ function initTask3() {
     var tip = d3.tip()
         .attr('class', 'd3-tip')
         .offset([-10, 0])
-        .html(function(d) { return "<span>" + d["country"]+ "\n Rank: "+ d['rank_'+visAttributeSelected[0]] + "</span>"; });
+        .html(function(d) { return "<span>" + d["country"]+ "<br> Rank: "+ d['rank_'+visAttributeSelected[0]] + "</span>"; });
     svg.call(tip);
     visualizations.task3.tip = tip;
 
@@ -1139,10 +1175,7 @@ function updateAttribute(attributeNum, selectedAttribute) {
             updateTask3(n, country);
         }
 
-        if(selectedAttribute != "human-development"){
-            updateHorizontalDivergentBar();
-        } else
-            hideHorizontalDivergentBar();
+        updateHorizontalDivergentBar();
     }
     updateAttributeTask2(attributeNum, selectedAttribute);
     updateAttributeTask5(attributeNum, selectedAttribute);
