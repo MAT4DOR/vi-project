@@ -761,6 +761,13 @@ function initTask3() {
 
     visualizations.task3 = {svg: svg};
 
+    var tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .offset([-10, 0])
+        .html(function(d) { return "<span>" + d["country"]+ "<br> Rank: "+ d['rank_'+visAttributeSelected[0]] + "</span>"; });
+    svg.call(tip);
+    visualizations.task3.tip = tip;
+
     var x1 = (full_dataset.length - 8) * 3;
     svg.append('line')
         .attr('x1', x1)
@@ -786,7 +793,9 @@ function initTask3() {
             var selIndex = $('input[name="radioCountry"]:checked').val();
             $("#country-selection-"+selIndex).val(countryId);
             changeSelectedCountry(selIndex, countryId);
-        });
+        })
+        .on('mouseover', function() { if(!isMissingValue(arguments[0], visAttributeSelected[0])) tip.show.apply(this, arguments); } )
+        .on('mouseout', function() { if(!isMissingValue(arguments[0], visAttributeSelected[0])) tip.hide.apply(this, arguments); });
 
     svg.append('text')
         .attr('x', w/2-60)
@@ -794,13 +803,6 @@ function initTask3() {
         .attr('text-anchor', 'middle')
         .attr('style', 'font-weight: bold')
         .text('An overview by attribute of the countries, ordered by Human Development Index ');
-
-    var tip = d3.tip()
-        .attr('class', 'd3-tip')
-        .offset([-10, 0])
-        .html(function(d) { return "<span>" + d["country"]+ "<br> Rank: "+ d['rank_'+visAttributeSelected[0]] + "</span>"; });
-    svg.call(tip);
-    visualizations.task3.tip = tip;
 
     for (var n = 0; n < 2; ++n) {
         updateTask3(n, $('#country-selection-' + n).find('option:selected').attr('value'));
@@ -827,13 +829,11 @@ function updateTask3(countrySelectorNumber, selectedCountry) {
 
     svg.selectAll("rect")
         .data(full_dataset)
-        .on('mouseover', visualizations.task3.tip.show)
-        .on('mouseout', visualizations.task3.tip.hide)
         .transition()   
         .duration(1000) 
         .attr("width",2)
         .attr("height",function(d) { return Math.abs(y(parseValue(d[selectedAttr], 4)) - y(0)); })
-        .attr("x", function(d, i) { return i*3; })
+        .attr("x", function(d, i) { return i < (full_dataset.length - 8) ? i*3 : i*3+2; })
         .attr("y", function(d, i) { return y(Math.max(parseValue(d[selectedAttr], 4), 0)); })
         .attr('opacity', function(d) { return isMissingValue(d, selectedAttr) ? 0 : 1; })
         .attr("fill",function(d, i) { return (i == visualizations.country0 ? countryColors[0] : i == visualizations.country1 ? countryColors[1] : 'blue');
