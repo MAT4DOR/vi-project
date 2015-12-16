@@ -576,6 +576,25 @@ function initHorizontalDivergentBar() {
 
     visualizations.task4 = {svg: svg};
 
+    svg.append('line')
+        .attr('x1', w/2)
+        .attr('x2', w/2)
+        .attr('y1', 0)
+        .attr('y2', 2*(21 + 16) + 20 + 5);
+
+    svg.append('line')
+        .attr('x1', w/2)
+        .attr('x2', w/2)
+        .attr('y1', 2*(21 + 16) + 20 + 5)
+        .attr('y2', 3*(21 + 16) + 42 - 5)
+        .attr('stroke-dasharray', '4, 5');
+
+    svg.append('line')
+        .attr('x1', w/2)
+        .attr('x2', w/2)
+        .attr('y1', 3*(21 + 16) + 42 - 5)
+        .attr('y2', 5*(21 + 16) + 42 + 20 + 5);
+
     var shortenedDataset = [0, 1, 2, 3, 4, 5]; // 6 dummy objects to init the svg
     svg.selectAll("rect")
         .data(shortenedDataset)
@@ -703,7 +722,7 @@ function updateHorizontalDivergentBar() {
         .transition()   
         .duration(1000) 
         .attr("x", function(d) {  
-            return x(parseValue(d[selectedAttr], 4)) + Math.sign(parseValue(d[selectedAttr], 4)) * 10;
+            return x(parseValue(d[selectedAttr], 4)) + Math.sign(parseValue(d[selectedAttr], 4)) * 10 + (parseValue(d[selectedAttr], 4) == 0 ? -10 : 0);
          })
         .attr('text-anchor', function(d) { return Math.sign(parseValue(d[selectedAttr], 4)) > 0 ? 'start' : 'end'})
         .attr("y", function(d, i) {
@@ -721,7 +740,7 @@ function updateHorizontalDivergentBar() {
         .transition()   
         .duration(1000)
         .attr("x", function(d) {
-            return x(0);
+            return x(0) + Math.sign(parseValue(d[selectedAttr], 4)) * 3 + (parseValue(d[selectedAttr], 4) == 0 ? -3 : 0);
          })
         .attr('text-anchor', function(d) { return Math.sign(parseValue(d[selectedAttr], 4)) > 0 ? 'start' : 'end'})
         .attr("y", function(d, i) {
@@ -742,10 +761,25 @@ function initTask3() {
 
     visualizations.task3 = {svg: svg};
 
+    var x1 = (full_dataset.length - 8) * 3;
+    svg.append('line')
+        .attr('x1', x1)
+        .attr('x2', x1)
+        .attr('y1', 50)
+        .attr('y2', h-50)
+        .attr('stroke-dasharray', '10, 10');
+
+    svg.append('line')
+        .attr('id', 'axisTask3')
+        .attr('x1', 0)
+        .attr('x2', full_dataset.length * 3 + 2)
+        .attr('y1', h-50)
+        .attr('y2', h-50);
+
     svg.selectAll("rect")
         .data(full_dataset)
         .enter().append("rect")
-        .attr("fill","white")
+        .attr('opacity', 0)
         .attr('data-id', function(d, i) { return i; })
         .on('click', function() {
             var countryId = $(this).attr('data-id');
@@ -801,9 +835,15 @@ function updateTask3(countrySelectorNumber, selectedCountry) {
         .attr("height",function(d) { return Math.abs(y(parseValue(d[selectedAttr], 4)) - y(0)); })
         .attr("x", function(d, i) { return i*3; })
         .attr("y", function(d, i) { return y(Math.max(parseValue(d[selectedAttr], 4), 0)); })
-        .attr("fill",function(d, i) { return (isMissingValue(d, selectedAttr) ? 'white' : (i == visualizations.country0 ? countryColors[0] : i == visualizations.country1 ? 
-            countryColors[1] : 'blue'));  
+        .attr('opacity', function(d) { return isMissingValue(d, selectedAttr) ? 0 : 1; })
+        .attr("fill",function(d, i) { return (i == visualizations.country0 ? countryColors[0] : i == visualizations.country1 ? countryColors[1] : 'blue');
         });
+
+    svg.select('#axisTask3')
+        .transition()
+        .duration(1000)
+        .attr('y1', y(0))
+        .attr('y2', y(0));
 }
 
 function initTask1(){
