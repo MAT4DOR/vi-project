@@ -13,8 +13,8 @@ var attributes = [
     {col: 'edu_female', shortname:'Education Female', fullname: 'Education Female', max:100, description: 'Percentage aged 25 and above'},
     {col: 'edu_male', shortname:'Education Male', fullname: 'Gender Education Male', max:100, description: 'Percentage aged 25 and above'},
     {col: 'edu_diff', shortname:'Education Difference', fullname: 'Difference Female-Male Education', max:100, description: 'Percentage difference aged 25 and above'},
-    {col: 'labour_female', shortname:'Labour Female', fullname: 'Labour Rate Female', max:100, description: 'Percentage aged 15 and above)'},
-    {col: 'labour_male', shortname:'Labour Male', fullname: 'Labour Rate Male', max:100, description: 'Percentage aged 15 and above)'},
+    {col: 'labour_female', shortname:'Labour Female', fullname: 'Labour Rate Female', max:100, description: 'Percentage aged 15 and above'},
+    {col: 'labour_male', shortname:'Labour Male', fullname: 'Labour Rate Male', max:100, description: 'Percentage aged 15 and above'},
     {col: 'labour_diff', shortname:'Labour Difference', fullname: 'Difference Female-Male Labour Rate', max:100, description: 'Percentage difference aged 15 and above'},
     //{col: 'human-development', shortname:'Human Development', fullname: 'Human Development', max: undefined},
 ];
@@ -329,7 +329,7 @@ function initTask2() {
         .attr('y', options.height+options.marginBottom-10)
         .attr('text-anchor', 'middle')
         .attr('style', 'font-weight: bold')
-        .text('Distribution of countries for each attribute, highlighting the selected countries and attributes');
+        .text('Distribution of countries for each attribute, highlighting the selected countries and attributes.');
 
     var enterSelection = svg.selectAll('circle').data(full_dataset).enter();
 
@@ -802,7 +802,7 @@ function initTask3() {
         .attr('y', h+margin.bottom-60)
         .attr('text-anchor', 'middle')
         .attr('style', 'font-weight: bold')
-        .text('An overview by attribute of the countries, ordered by Human Development Index ');
+        .text('An overview by attribute of the countries, ordered by Human Development Index.');
 
     for (var n = 0; n < 2; ++n) {
         updateTask3(n, $('#country-selection-' + n).find('option:selected').attr('value'));
@@ -865,7 +865,7 @@ function initTask1(){
         .attr('y', height+margin.bottom-30)
         .attr('text-anchor', 'middle')
         .attr('style', 'font-weight: bold')
-        .text('Two bars that compare the two selected countries on the selected attribute');
+        .text('Compare the two selected countries on the selected attribute.');
 
     svg.append("text")
         .attr("id", "country0NameText")
