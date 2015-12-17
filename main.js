@@ -11,7 +11,7 @@ var attributes = [
     {col: 'abr', shortname:'Adolencent Births', fullname: 'Adolescent Birth Rate', max:-1, description: 'Births per 1,000 women aged 15-19'},
     {col: 'ssp', shortname:'Seats Parliament', fullname: 'Share of seats in national parliament', max:100, description: 'Percentage held by women'},
     {col: 'edu_female', shortname:'Education Female', fullname: 'Education Female', max:100, description: 'Percentage aged 25 and above'},
-    {col: 'edu_male', shortname:'Education Male', fullname: 'Gender Education Male', max:100, description: 'Percentage aged 25 and above'},
+    {col: 'edu_male', shortname:'Education Male', fullname: 'Education Male', max:100, description: 'Percentage aged 25 and above'},
     {col: 'edu_diff', shortname:'Education Difference', fullname: 'Difference Female-Male Education', max:100, description: 'Percentage difference aged 25 and above'},
     {col: 'labour_female', shortname:'Labour Female', fullname: 'Labour Rate Female', max:100, description: 'Percentage aged 15 and above'},
     {col: 'labour_male', shortname:'Labour Male', fullname: 'Labour Rate Male', max:100, description: 'Percentage aged 15 and above'},
